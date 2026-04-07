@@ -23,6 +23,7 @@ export interface Note {
   dateRange: SerializedDateRange | null;
   createdAt: string;
   color: string;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 export type NavigationDirection = 'prev' | 'next';

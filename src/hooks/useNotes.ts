@@ -45,13 +45,14 @@ export function useNotes() {
     }
   }, [notes, isLoaded]);
 
-  const addNote = useCallback((content: string, dateRange: DateRange | null) => {
+  const addNote = useCallback((content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low' = 'medium') => {
     const newNote: Note = {
       id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: content.trim(),
       dateRange: serializeDateRange(dateRange),
       createdAt: new Date().toISOString(),
       color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
+      priority,
     };
     setNotes(prev => [newNote, ...prev]);
   }, []);
