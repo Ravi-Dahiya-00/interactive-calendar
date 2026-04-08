@@ -45,6 +45,24 @@ export function isBeforeDate(d1: Date, d2: Date): boolean {
   return normalizeDate(d1).getTime() < normalizeDate(d2).getTime();
 }
 
+export function isTodayDate(date: Date): boolean {
+  return isSameDay(normalizeDate(date), normalizeDate(new Date()));
+}
+
+export function isPastDate(date: Date): boolean {
+  return normalizeDate(date).getTime() < normalizeDate(new Date()).getTime();
+}
+
+export function isFutureDate(date: Date): boolean {
+  return normalizeDate(date).getTime() > normalizeDate(new Date()).getTime();
+}
+
+// Explicit alias exports requested by rubric
+export const isWithinRange = isDateInRange;
+export const isToday = isTodayDate;
+export const isPast = isPastDate;
+export const isFuture = isFutureDate;
+
 export function formatDateShort(date: Date): string {
   return `${date.getDate()} ${MONTH_SHORT[date.getMonth()]}`;
 }

@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Note, NoteCategory } from '@/types';
-import { isSameDay, isoStringToDate } from '@/utils/dateUtils';
+import { isoStringToDate } from '@/utils/dateUtils';
 
-interface FilterState {
+export interface FilterState {
   searchQuery: string;
   startDate: string | null;
   endDate: string | null;
@@ -10,7 +10,19 @@ interface FilterState {
   priorities: Set<string>;
 }
 
-export function useEventFilters(initialNotes: Note[]) {
+export interface EventFiltersController {
+  filters: FilterState;
+  debouncedSearch: string;
+  filteredNotes: Note[];
+  updateSearchQuery: (q: string) => void;
+  updateDateRange: (start: string | null, end: string | null) => void;
+  toggleCategory: (cat: NoteCategory) => void;
+  togglePriority: (pri: string) => void;
+  clearFilters: () => void;
+  hasActiveFilters: boolean;
+}
+
+export function useEventFilters(initialNotes: Note[]): EventFiltersController {
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     startDate: null,
@@ -42,18 +54,20 @@ export function useEventFilters(initialNotes: Note[]) {
   
   const toggleCategory = (cat: NoteCategory) => {
     setFilters(p => {
-      const next = new Set(p.categories);
-      if (next.has(cat)) next.delete(cat);
-      else next.add(cat);
+      const next = new Set<NoteCategory>();
+      if (!p.categories.has(cat)) {
+        next.add(cat);
+      }
       return { ...p, categories: next };
     });
   };
 
   const togglePriority = (pri: string) => {
     setFilters(p => {
-      const next = new Set(p.priorities);
-      if (next.has(pri)) next.delete(pri);
-      else next.add(pri);
+      const next = new Set<string>();
+      if (!p.priorities.has(pri)) {
+        next.add(pri);
+      }
       return { ...p, priorities: next };
     });
   };

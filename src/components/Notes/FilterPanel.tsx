@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { NoteCategory } from '@/types';
 import { FilterDatePicker } from './FilterDatePicker';
 
@@ -33,11 +34,20 @@ export function FilterPanel({
   hasActiveFilters,
 }: FilterPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedTrigger = panelRef.current?.contains(target);
+      const clickedDropdown = dropdownRef.current?.contains(target);
+      if (!clickedTrigger && !clickedDropdown) {
         setIsOpen(false);
       }
     };
@@ -86,12 +96,15 @@ export function FilterPanel({
       </div>
 
       {/* Advanced Filters Dropdown */}
-      {isOpen && (
+      {isOpen && isMounted && createPortal(
         <>
           {/* Mobile Overlay Background */}
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 sm:hidden" onClick={() => setIsOpen(false)} />
           
-          <div className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 right-0 sm:top-12 sm:left-auto sm:right-0 w-full sm:w-[400px] bg-[#1e293b] sm:bg-black/80 sm:backdrop-blur-xl sm:border border-t border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl z-50 p-5 sm:p-5 animate-slide-up sm:origin-top text-white max-h-[85vh] overflow-y-auto">
+          <div
+            ref={dropdownRef}
+            className="fixed bottom-0 left-0 right-0 sm:bottom-auto sm:top-[88px] sm:left-auto sm:right-4 w-full sm:w-[400px] bg-[#1e293b] sm:bg-black/80 sm:backdrop-blur-xl sm:border border-t border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl z-[120] p-5 animate-slide-up sm:origin-top text-white max-h-[90dvh] sm:max-h-[70vh] overflow-y-auto"
+          >
             
             {/* Mobile Drag Handle */}
             <div className="flex justify-center sm:hidden mb-4">
@@ -117,7 +130,7 @@ export function FilterPanel({
 
           <div className="space-y-4">
             {/* Date Filters */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-white/60 mb-1 font-medium">Start Date</label>
                 <FilterDatePicker
@@ -191,7 +204,8 @@ export function FilterPanel({
             </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

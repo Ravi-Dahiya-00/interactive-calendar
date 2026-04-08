@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useDateRange } from '@/hooks/useDateRange';
 import { useNotes } from '@/hooks/useNotes';
@@ -9,8 +9,11 @@ import { CalendarGrid } from './CalendarGrid';
 import { NotesPanel } from '@/components/Notes/NotesPanel';
 import { DailySummaryModal } from './DailySummaryModal';
 import { useReminders } from '@/hooks/useReminders';
-import { ThemeCustomizer } from '@/components/Theme/ThemeCustomizer';
-import { useState } from 'react';
+import { ThemeToggle } from '@/components/Theme/ThemeToggle';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { MiniAnalyticsDashboard } from '@/components/Analytics/MiniAnalyticsDashboard';
+import { useEventFilters } from '@/hooks/useEventFilters';
+import { useEventDragDrop } from '@/hooks/useEventDragDrop';
 
 export function Calendar() {
   const {
@@ -26,9 +29,10 @@ export function Calendar() {
 
   const {
     range,
-    isSelectingEnd,
-    handleDayClick,
-    handleDayHover,
+    isDragging,
+    handleMouseDown,
+    handleMouseEnterDay,
+    handleMouseUp,
     handleMouseLeave,
     clearRange,
     isRangeStart,
@@ -40,8 +44,28 @@ export function Calendar() {
   } = useDateRange();
 
   const { notes, addNote, deleteNote, updateNote } = useNotes();
+  const filtersController = useEventFilters(notes);
+  const {
+    draggingNoteId,
+    dragTargetIso,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    moveNoteByDays,
+  } = useEventDragDrop({
+    notes,
+    onUpdateNote: updateNote,
+  });
   const { toasts, removeToast } = useReminders(notes, updateNote);
   const [isMobileNotesOpen, setIsMobileNotesOpen] = useState(false);
+  const analytics = useAnalytics({
+    notes,
+    currentMonth,
+    currentYear,
+    scopedNotes: filtersController.hasActiveFilters ? filtersController.filteredNotes : notes,
+  });
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -79,7 +103,11 @@ export function Calendar() {
                 <h4 className="text-sm font-bold text-cal-text">{toast.title}</h4>
                 <p className="text-xs text-cal-muted mt-1">{toast.message}</p>
               </div>
-              <button onClick={() => removeToast(toast.id)} className="text-cal-muted hover:text-cal-primary rounded-lg p-1 transition-colors">
+              <button
+                onClick={() => removeToast(toast.id)}
+                className="text-cal-muted hover:text-cal-primary rounded-lg p-1 transition-colors"
+                aria-label="Dismiss reminder notification"
+              >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -92,18 +120,24 @@ export function Calendar() {
       {/* Title */}
       <div className="relative text-center mb-6 sm:mb-8 flex flex-col items-center">
         <div className="absolute top-0 right-0 sm:right-4">
-          <ThemeCustomizer />
+          <ThemeToggle />
         </div>
         <h1
-          className="text-2xl sm:text-3xl font-bold text-cal-text mb-1 transition-colors"
-          style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+          className="text-2xl sm:text-3xl font-bold text-cal-text mb-1 transition-colors font-display"
         >
           Interactive Calendar
         </h1>
         <p className="text-sm text-cal-muted transition-colors">
-          Select a date range · Add notes · Navigate with arrow keys
+          Drag to select a range · Add notes · Navigate with arrow keys
         </p>
       </div>
+
+      {/* Main Layout */}
+      <MiniAnalyticsDashboard
+        stats={analytics}
+        monthName={monthName}
+        isFilteredView={filtersController.hasActiveFilters}
+      />
 
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
@@ -127,10 +161,20 @@ export function Calendar() {
             isInPreviewRange={isInPreviewRange}
             isPreviewStart={isPreviewStart}
             isPreviewEnd={isPreviewEnd}
-            onDayClick={handleDayClick}
-            onDayHover={handleDayHover}
+            onMouseDown={handleMouseDown}
+            onMouseEnter={handleMouseEnterDay}
+            onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
             animationKey={animationKey}
+            notes={notes}
+            draggingNoteId={draggingNoteId}
+            dragTargetIso={dragTargetIso}
+            onEventDragStart={handleDragStart}
+            onEventDragEnd={handleDragEnd}
+            onCellDragOver={handleDragOver}
+            onCellDragLeave={handleDragLeave}
+            onCellDrop={handleDrop}
+            onEventMoveByDays={moveNoteByDays}
           />
 
           {/* Legend */}
@@ -159,10 +203,14 @@ export function Calendar() {
           <NotesPanel
             notes={notes}
             dateRange={range}
-            isSelectingEnd={isSelectingEnd}
+            isSelectingEnd={isDragging}
             onAddNote={addNote}
             onDeleteNote={deleteNote}
             onClearRange={clearRange}
+            onGoToToday={goToToday}
+            filterController={filtersController}
+            currentMonth={currentMonth}
+            currentYear={currentYear}
           />
         </div>
       </div>
@@ -203,10 +251,14 @@ export function Calendar() {
                 <NotesPanel
                   notes={notes}
                   dateRange={range}
-                  isSelectingEnd={isSelectingEnd}
+                  isSelectingEnd={isDragging}
                   onAddNote={addNote}
                   onDeleteNote={deleteNote}
                   onClearRange={clearRange}
+                  onGoToToday={goToToday}
+                  filterController={filtersController}
+                  currentMonth={currentMonth}
+                  currentYear={currentYear}
                 />
               </div>
             </div>

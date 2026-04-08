@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarDay } from '@/types';
 import { DAY_NAMES } from '@/utils/dateUtils';
 import { DayCell } from './DayCell';
+import { Note } from '@/types';
+import { dateToISOString } from '@/utils/dateUtils';
+
+const EMPTY_NOTES: Note[] = [];
 
 interface CalendarGridProps {
   monthGrid: CalendarDay[][];
@@ -14,10 +18,20 @@ interface CalendarGridProps {
   isInPreviewRange: (date: Date) => boolean;
   isPreviewStart: (date: Date) => boolean;
   isPreviewEnd: (date: Date) => boolean;
-  onDayClick: (date: Date) => void;
-  onDayHover: (date: Date) => void;
+  onMouseDown: (date: Date) => void;
+  onMouseEnter: (date: Date) => void;
+  onMouseUp: () => void;
   onMouseLeave: () => void;
   animationKey: string;
+  notes: Note[];
+  draggingNoteId: string | null;
+  dragTargetIso: string | null;
+  onEventDragStart: (noteId: string) => void;
+  onEventDragEnd: () => void;
+  onCellDragOver: (date: Date, isCurrentMonth: boolean, e: React.DragEvent) => void;
+  onCellDragLeave: (date: Date) => void;
+  onCellDrop: (date: Date, isCurrentMonth: boolean, e: React.DragEvent) => void;
+  onEventMoveByDays: (noteId: string, deltaDays: number) => void;
   onNavigate?: (direction: 'prev' | 'next') => void;
 }
 
@@ -30,14 +44,35 @@ export function CalendarGrid({
   isInPreviewRange,
   isPreviewStart,
   isPreviewEnd,
-  onDayClick,
-  onDayHover,
+  onMouseDown,
+  onMouseEnter,
+  onMouseUp,
   onMouseLeave,
   animationKey,
+  notes,
+  draggingNoteId,
+  dragTargetIso,
+  onEventDragStart,
+  onEventDragEnd,
+  onCellDragOver,
+  onCellDragLeave,
+  onCellDrop,
+  onEventMoveByDays,
   onNavigate,
 }: CalendarGridProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const notesByDate = useMemo(() => {
+    const map = new Map<string, Note[]>();
+    for (const note of notes) {
+      const start = note.dateRange?.start;
+      if (!start) continue;
+      const list = map.get(start) ?? [];
+      list.push(note);
+      map.set(start, list);
+    }
+    return map;
+  }, [notes]);
 
   // Minimum swipe distance
   const minSwipeDistance = 50;
@@ -71,6 +106,7 @@ export function CalendarGrid({
       onTouchStart={onTouchStartHandler}
       onTouchMove={onTouchMoveHandler}
       onTouchEnd={onTouchEndHandler}
+      onMouseUp={onMouseUp}
     >
       {/* Weekday Headers */}
       <div className="day-grid">
@@ -89,7 +125,6 @@ export function CalendarGrid({
             ? 'month-transition-enter'
             : 'month-transition-enter-reverse'
         }`}
-        role="grid"
         onMouseLeave={onMouseLeave}
       >
         {monthGrid.flat().map((day, index) => (
@@ -102,8 +137,17 @@ export function CalendarGrid({
             isInPreview={isInPreviewRange(day.date)}
             isPreviewStart={isPreviewStart(day.date)}
             isPreviewEnd={isPreviewEnd(day.date)}
-            onClick={onDayClick}
-            onHover={onDayHover}
+            onMouseDown={onMouseDown}
+            onMouseEnter={onMouseEnter}
+            dayNotes={notesByDate.get(dateToISOString(day.date)) ?? EMPTY_NOTES}
+            draggingNoteId={draggingNoteId}
+            isDropTarget={dragTargetIso === dateToISOString(day.date)}
+            onEventDragStart={onEventDragStart}
+            onEventDragEnd={onEventDragEnd}
+            onCellDragOver={onCellDragOver}
+            onCellDragLeave={onCellDragLeave}
+            onCellDrop={onCellDrop}
+            onEventMoveByDays={onEventMoveByDays}
           />
         ))}
       </div>

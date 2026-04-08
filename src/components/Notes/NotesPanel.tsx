@@ -3,9 +3,10 @@
 import { useState, useCallback, KeyboardEvent, useMemo, useRef, useEffect } from 'react';
 import { Note, DateRange, NoteCategory } from '@/types';
 import { isoStringToDate, formatDateRange } from '@/utils/dateUtils';
-import { useEventFilters } from '@/hooks/useEventFilters';
+import { EventFiltersController } from '@/hooks/useEventFilters';
 import { FilterPanel } from './FilterPanel';
 import { SearchMatchHighlight } from './SearchMatchHighlight';
+import { EmptyState } from '@/components/Common/EmptyState';
 
 interface NotesPanelProps {
   notes: Note[];
@@ -14,6 +15,10 @@ interface NotesPanelProps {
   onAddNote: (content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low', eventTime?: string, eventEndTime?: string, reminder?: number, category?: NoteCategory) => void;
   onDeleteNote: (id: string) => void;
   onClearRange: () => void;
+  onGoToToday: () => void;
+  filterController: EventFiltersController;
+  currentMonth: number;
+  currentYear: number;
 }
 
 export function NotesPanel({
@@ -23,6 +28,10 @@ export function NotesPanel({
   onAddNote,
   onDeleteNote,
   onClearRange,
+  onGoToToday,
+  filterController,
+  currentMonth,
+  currentYear,
 }: NotesPanelProps) {
   const [newNote, setNewNote] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -33,7 +42,6 @@ export function NotesPanel({
   const [eventTime, setEventTime] = useState('');
   const [reminder, setReminder] = useState<number | undefined>(undefined);
   
-  // Use Event Filters Hook
   const {
     filters,
     debouncedSearch,
@@ -44,7 +52,7 @@ export function NotesPanel({
     togglePriority,
     clearFilters,
     hasActiveFilters
-  } = useEventFilters(notes);
+  } = filterController;
 
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
   const timeMenuRef = useRef<HTMLDivElement>(null);
@@ -58,6 +66,7 @@ export function NotesPanel({
 
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
+  const noteInputRef = useRef<HTMLTextAreaElement>(null);
 
   const reminderOptions = [
     { label: 'No reminder', value: undefined },
@@ -182,6 +191,26 @@ export function NotesPanel({
     low: 'bg-green-50 text-green-600 border-green-200',
   };
 
+  const isNoteInCurrentMonth = useCallback(
+    (note: Note) => {
+      const referenceDate = note.dateRange?.start
+        ? isoStringToDate(note.dateRange.start)
+        : new Date(note.createdAt);
+      return (
+        referenceDate.getMonth() === currentMonth &&
+        referenceDate.getFullYear() === currentYear
+      );
+    },
+    [currentMonth, currentYear]
+  );
+
+  const monthScopedNotes = useMemo(
+    () => filteredAndSortedNotes.filter((note) => isNoteInCurrentMonth(note)),
+    [filteredAndSortedNotes, isNoteInCurrentMonth]
+  );
+
+  const visibleNotes = hasActiveFilters ? filteredAndSortedNotes : monthScopedNotes;
+
   return (
     <div className="notes-panel h-full flex flex-col">
       {/* Header */}
@@ -202,9 +231,9 @@ export function NotesPanel({
               />
             </svg>
             Notes
-            {filteredNotes.length > 0 && (
+            {visibleNotes.length > 0 && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-cal-primary-50 text-cal-primary ml-1">
-                {filteredNotes.length}
+                {visibleNotes.length}
               </span>
             )}
           </h3>
@@ -292,6 +321,7 @@ export function NotesPanel({
       {/* New Note Input */}
       <div className="p-4 sm:p-5 border-b border-cal-border">
         <textarea
+          ref={noteInputRef}
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -505,36 +535,33 @@ export function NotesPanel({
 
       {/* Notes List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-3 relative">
-        {notes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-cal-bg flex items-center justify-center mb-4">
-              <svg
-                className="w-8 h-8 text-cal-muted"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-cal-text mb-1">
-              No notes yet
-            </p>
-            <p className="text-xs text-cal-muted">
-              Select dates and start writing
-            </p>
-          </div>
-        ) : filteredAndSortedNotes.length === 0 ? (
-           <div className="flex flex-col items-center justify-center py-8 text-center text-cal-muted">
-             <p className="text-sm">No notes match the active filters or search.</p>
-           </div>
+        {visibleNotes.length === 0 ? (
+          hasActiveFilters ? (
+            <EmptyState
+              title="No matching events found"
+              description="No events match your current filters or search."
+              hint="Try clearing filters or searching with another keyword."
+              shortcuts={[{ key: 'Esc', label: 'Clear selection' }]}
+              actionLabel="Clear Filters"
+              onAction={clearFilters}
+            />
+          ) : (
+            <EmptyState
+              title="No events yet. Start by adding one 🚀"
+              description="Your current month is empty."
+              hint="Click on a date to create your first event."
+              shortcuts={[
+                { key: 'Enter', label: 'Add event' },
+                { key: 'Esc', label: 'Clear selection' },
+              ]}
+              actionLabel="Add Event"
+              onAction={() => noteInputRef.current?.focus()}
+              secondaryActionLabel="Go to Today"
+              onSecondaryAction={onGoToToday}
+            />
+          )
         ) : (
-          filteredAndSortedNotes.map((note, index) => {
+          visibleNotes.map((note, index) => {
             const p = note.priority || 'medium';
             const colors = priorityColorsLight[p];
             const indicatorColor = p === 'high' ? 'bg-red-500' : p === 'medium' ? 'bg-amber-500' : 'bg-green-500';
@@ -547,7 +574,6 @@ export function NotesPanel({
                     ? 'opacity-0 scale-95 transition-all duration-200'
                     : ''
                 }`}
-                style={{ animationDelay: `${index * 40}ms` }}
               >
                 <div
                   className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-md ${indicatorColor}`}
