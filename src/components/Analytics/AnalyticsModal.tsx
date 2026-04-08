@@ -29,11 +29,32 @@ function formatNoteDate(note: Note): string {
   return formatDateRange(start, end);
 }
 
+function getDisplayTitle(note: Note): string {
+  if (note.title?.trim()) return note.title.trim();
+  const cleaned = note.content.trim();
+  if (!cleaned) return 'Untitled';
+  return cleaned.length > 42 ? `${cleaned.slice(0, 42)}...` : cleaned;
+}
+
 const PRIORITY_CONFIG = {
   high: { label: 'High', dot: 'bg-rose-500', badge: 'bg-rose-500 text-white' },
   medium: { label: 'Medium', dot: 'bg-amber-500', badge: 'bg-amber-500 text-white' },
   low: { label: 'Low', dot: 'bg-emerald-500', badge: 'bg-emerald-500 text-white' },
 };
+
+const WIDTH_STEPS = [
+  'w-0',
+  'w-[10%]',
+  'w-[20%]',
+  'w-[30%]',
+  'w-[40%]',
+  'w-[50%]',
+  'w-[60%]',
+  'w-[70%]',
+  'w-[80%]',
+  'w-[90%]',
+  'w-full',
+] as const;
 
 const VIEW_CONFIG: Record<AnalyticsView, { title: string; icon: React.ReactNode; accent: string }> = {
   totalEventsInMonth: {
@@ -67,6 +88,10 @@ const VIEW_CONFIG: Record<AnalyticsView, { title: string; icon: React.ReactNode;
 
 export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYear, onClose }: AnalyticsModalProps) {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [query, setQuery] = useState('');
+  const [sortMode, setSortMode] = useState<'recent' | 'priority' | 'upcoming'>('recent');
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
@@ -86,7 +111,7 @@ export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYe
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const filteredNotes = useMemo(() => {
+  const baseNotes = useMemo(() => {
     return notes.filter((note) => {
       const startDate = getNoteDate(note);
       if (view === 'totalEventsInMonth') {
@@ -106,6 +131,26 @@ export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYe
     });
   }, [notes, view, currentMonth, currentYear, today]);
 
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    baseNotes.forEach((n) => set.add(n.category ?? 'other'));
+    return Array.from(set);
+  }, [baseNotes]);
+
+  const filteredNotes = useMemo(() => {
+    return baseNotes.filter((note) => {
+      if (priorityFilter !== 'all' && (note.priority ?? 'medium') !== priorityFilter) return false;
+      if (categoryFilter !== 'all' && (note.category ?? 'other') !== categoryFilter) return false;
+      if (query.trim()) {
+        const q = query.trim().toLowerCase();
+        const title = (note.title ?? '').toLowerCase();
+        const content = (note.content ?? '').toLowerCase();
+        if (!title.includes(q) && !content.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [baseNotes, priorityFilter, categoryFilter, query]);
+
   const stats = useMemo(() => {
     const categories: Record<string, number> = {};
     const priorities = { high: 0, medium: 0, low: 0 };
@@ -119,12 +164,16 @@ export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYe
 
   const sortedNotes = useMemo(() => {
     return [...filteredNotes].sort((a, b) => {
-      if (view === 'upcomingEvents') {
+      if (sortMode === 'upcoming' || view === 'upcomingEvents') {
         return (getNoteDate(a)?.getTime() ?? 0) - (getNoteDate(b)?.getTime() ?? 0);
+      }
+      if (sortMode === 'priority') {
+        const score: Record<string, number> = { high: 3, medium: 2, low: 1 };
+        return (score[b.priority ?? 'medium'] ?? 2) - (score[a.priority ?? 'medium'] ?? 2);
       }
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [filteredNotes, view]);
+  }, [filteredNotes, view, sortMode]);
 
   const config = VIEW_CONFIG[view];
 
@@ -132,39 +181,96 @@ export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYe
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-cal-card border border-cal-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[90vh] bg-cal-card border border-cal-border rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-cal-primary/10 via-transparent to-cal-primary/5 pointer-events-none" />
         
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-cal-border shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-cal-border shrink-0 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <span className={config.accent}>{config.icon}</span>
+            <span className={`${config.accent} bg-cal-bg border border-cal-border rounded-xl p-2`}>{config.icon}</span>
             <div>
               <h2 className="text-lg font-bold text-cal-text font-display uppercase tracking-wide">{config.title}</h2>
               <p className="text-xs text-cal-muted mt-0.5">{monthName} · {filteredNotes.length} items</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-cal-muted hover:bg-cal-bg hover:text-cal-text transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-cal-muted hover:bg-cal-bg hover:text-cal-text transition-all hover:rotate-90"
+            aria-label="Close analytics modal"
+            title="Close analytics modal"
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </header>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+            {/* Controls */}
+            <div className="mb-5 rounded-2xl border border-cal-border bg-cal-bg/80 p-3 sm:p-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search in events..."
+                  className="flex-1 min-w-[170px] px-3 py-2 rounded-lg border border-cal-border bg-cal-card text-sm text-cal-text placeholder:text-cal-muted outline-none focus:ring-2 focus:ring-cal-primary/20 focus:border-cal-primary"
+                />
+                <select
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as 'recent' | 'priority' | 'upcoming')}
+                  className="px-3 py-2 rounded-lg border border-cal-border bg-cal-card text-sm text-cal-text outline-none focus:ring-2 focus:ring-cal-primary/20 focus:border-cal-primary min-w-[150px]"
+                  aria-label="Sort analytics list"
+                >
+                  <option value="recent">Sort: Recent</option>
+                  <option value="priority">Sort: Priority</option>
+                  <option value="upcoming">Sort: Upcoming</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {(['all', 'high', 'medium', 'low'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPriorityFilter(p)}
+                    className={`px-2.5 py-1 rounded-md border text-xs font-semibold uppercase tracking-wider transition-all ${
+                      priorityFilter === p
+                        ? 'bg-cal-primary text-white border-cal-primary shadow-sm'
+                        : 'bg-cal-card border-cal-border text-cal-muted hover:text-cal-text hover:border-cal-primary/30'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="ml-auto px-2.5 py-1 rounded-md border border-cal-border bg-cal-card text-xs font-semibold uppercase tracking-wider text-cal-text outline-none min-w-[140px]"
+                  aria-label="Filter by category"
+                >
+                  <option value="all">Category: All</option>
+                  {categoryOptions.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             
             {/* Stats section */}
             {filteredNotes.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <article className="bg-cal-bg rounded-xl p-4 border border-cal-border">
+                <article className="bg-cal-bg rounded-2xl p-4 border border-cal-border shadow-sm">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">Priorities</p>
                   <div className="space-y-2">
                     {(['high', 'medium', 'low'] as const).map(p => {
                       const count = stats.priorities[p];
                       const pct = Math.round((count / filteredNotes.length) * 100) || 0;
+                      const widthClass = WIDTH_STEPS[Math.max(0, Math.min(10, Math.round(pct / 10)))];
                       const cfg = PRIORITY_CONFIG[p];
                       return (
                         <div key={p} className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                           <div className="flex-1 bg-cal-border h-1.5 rounded-full overflow-hidden">
-                            <div className={`h-full ${cfg.dot}`} style={{ width: `${pct}%` }} />
+                            <div className={`h-full ${cfg.dot} ${widthClass} transition-all duration-500`} />
                           </div>
                           <span className="text-[10px] font-bold text-cal-muted w-4 text-right">{count}</span>
                         </div>
@@ -172,7 +278,7 @@ export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYe
                     })}
                   </div>
                 </article>
-                <article className="bg-cal-bg rounded-xl p-4 border border-cal-border">
+                <article className="bg-cal-bg rounded-2xl p-4 border border-cal-border shadow-sm">
                    <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">Categories</p>
                    <div className="flex flex-wrap gap-1.5">
                      {Object.entries(stats.categories).map(([cat, count]) => (
@@ -198,13 +304,14 @@ export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYe
                     <button
                       key={note.id}
                       onClick={() => setSelectedNote(note)}
-                      className="w-full text-left p-4 rounded-xl border border-cal-border bg-cal-bg hover:border-cal-primary transition-all flex items-center justify-between group"
+                      className="w-full text-left p-4 rounded-2xl border border-cal-border bg-cal-bg hover:border-cal-primary/50 hover:shadow-md transition-all flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         <div className={`w-1 h-8 rounded-full ${cfg.dot} opacity-60`} />
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-cal-text truncate">{note.title || 'Untitled'}</p>
+                          <p className="text-sm font-bold text-cal-text truncate">{getDisplayTitle(note)}</p>
                           <p className="text-[10px] text-cal-muted font-bold uppercase tracking-wider">{formatNoteDate(note)}</p>
+                          <p className="text-xs text-cal-muted/90 truncate mt-1">{note.content}</p>
                         </div>
                       </div>
                       <span className="text-[10px] font-bold text-cal-primary opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest text-right shrink-0">Details</span>
