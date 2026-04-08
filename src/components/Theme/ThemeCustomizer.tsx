@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTheme, ThemeMode, ColorTheme } from '@/contexts/ThemeContext';
 
 export function ThemeCustomizer() {
-  const { theme, resolvedTheme, color, setTheme, setColor } = useTheme();
+  const { theme, resolvedTheme, color, ambientEffects, setTheme, setColor, setAmbientEffects } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -112,6 +112,31 @@ export function ThemeCustomizer() {
                 </button>
               ))}
             </div>
+          </div>
+          
+          {/* Ambient Effects Switcher */}
+          <div>
+            <h3 className="text-xs font-semibold text-cal-muted uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>Ambient Effects</span>
+            </h3>
+            <button
+              onClick={() => setAmbientEffects(!ambientEffects)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cal-primary focus:ring-offset-2 dark:focus:ring-offset-cal-card ${
+                ambientEffects ? 'bg-cal-primary' : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+              role="switch"
+              aria-checked={ambientEffects}
+            >
+              <span className="sr-only">Enable ambient effects</span>
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  ambientEffects ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <p className="text-[10px] text-cal-muted mt-1 leading-snug">
+              Seasonal rain, snow, and sunlight overlays. Disable for best performance.
+            </p>
           </div>
           
         </div>

@@ -9,6 +9,14 @@ export function useDateRange() {
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  const setOrderedRange = useCallback((first: Date, second: Date) => {
+    if (isBeforeDate(second, first)) {
+      setRange({ start: second, end: first });
+    } else {
+      setRange({ start: first, end: second });
+    }
+  }, []);
+
   const handleMouseDown = useCallback((date: Date) => {
     const normalized = normalizeDate(date);
 
@@ -27,10 +35,32 @@ export function useDateRange() {
       return;
     }
 
+    // If a multi-day range already exists, clicking anywhere starts a new selection.
+    if (range.start && range.end && !isSameDay(range.start, range.end)) {
+      setRange({ start: normalized, end: null });
+      setHoveredDate(normalized);
+      setIsDragging(true);
+      return;
+    }
+
+    // If a single-day selection already exists, next click completes a range.
+    // This enables cross-month/year selection after navigation.
+    if (
+      range.start &&
+      range.end &&
+      isSameDay(range.start, range.end) &&
+      !isSameDay(range.start, normalized)
+    ) {
+      setOrderedRange(range.start, normalized);
+      setHoveredDate(null);
+      setIsDragging(false);
+      return;
+    }
+
     setRange({ start: normalized, end: null });
     setHoveredDate(normalized);
     setIsDragging(true);
-  }, [range.start, range.end]);
+  }, [range.start, range.end, setOrderedRange]);
 
   const handleMouseEnterDay = useCallback((date: Date) => {
     const normalized = normalizeDate(date);
@@ -46,15 +76,11 @@ export function useDateRange() {
     const start = range.start;
     const end = hoveredDate;
 
-    if (isBeforeDate(end, start)) {
-      setRange({ start: end, end: start });
-    } else {
-      setRange({ start, end });
-    }
+    setOrderedRange(start, end);
     
     setIsDragging(false);
     setHoveredDate(null);
-  }, [isDragging, range.start, hoveredDate]);
+  }, [isDragging, range.start, hoveredDate, setOrderedRange]);
 
   const handleMouseLeave = useCallback(() => {
     if (!isDragging) {

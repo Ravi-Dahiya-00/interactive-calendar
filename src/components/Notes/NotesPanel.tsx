@@ -19,6 +19,7 @@ interface NotesPanelProps {
   filterController: EventFiltersController;
   currentMonth: number;
   currentYear: number;
+  panelId: 'desktop' | 'mobile';
 }
 
 export function NotesPanel({
@@ -32,6 +33,7 @@ export function NotesPanel({
   filterController,
   currentMonth,
   currentYear,
+  panelId,
 }: NotesPanelProps) {
   const [newNote, setNewNote] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -255,24 +257,29 @@ export function NotesPanel({
 
         {/* Selected Range Badge */}
         {hasRange && !isSelectingEnd && (
-          <div className="flex items-center gap-2 animate-fade-in">
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-cal-primary-50 border border-cal-primary-light">
-              <svg
-                className="w-4 h-4 text-cal-primary flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="text-sm font-medium text-cal-primary-dark truncate">
-                {rangeText}
-              </span>
+          <div className="flex items-start gap-2 animate-fade-in">
+            <div className="flex-1 flex flex-col gap-1 px-3 py-2 rounded-lg bg-cal-primary-50 border border-cal-primary-light">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-4 h-4 text-cal-primary flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-cal-primary-dark truncate">
+                  {rangeText}
+                </span>
+              </div>
+              <p className="text-[11px] text-cal-primary/80">
+                Tip: navigate month/year and click another date to extend this range.
+              </p>
             </div>
             <button
               onClick={onClearRange}
@@ -332,7 +339,7 @@ export function NotesPanel({
           }
           className="w-full px-3 py-2.5 text-sm rounded-xl border border-cal-border bg-cal-bg text-cal-text focus:border-cal-primary focus:ring-2 focus:ring-cal-primary/20 outline-none resize-none transition-all duration-200 placeholder:text-cal-muted"
           rows={3}
-          id="note-input"
+          id={`${panelId}-note-input`}
         />
         
         {/* Time and Reminder Selection */}
@@ -513,7 +520,7 @@ export function NotesPanel({
             onClick={handleAddNote}
             disabled={!newNote.trim()}
             className="w-full sm:w-auto justify-center px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-cal-primary text-white hover:bg-cal-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
-            id="add-note-btn"
+            id={`${panelId}-add-note-btn`}
           >
             <svg
               className="w-3.5 h-3.5"

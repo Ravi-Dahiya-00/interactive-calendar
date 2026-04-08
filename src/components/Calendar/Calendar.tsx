@@ -14,6 +14,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { MiniAnalyticsDashboard } from '@/components/Analytics/MiniAnalyticsDashboard';
 import { useEventFilters } from '@/hooks/useEventFilters';
 import { useEventDragDrop } from '@/hooks/useEventDragDrop';
+import { SeasonalEffects } from '@/components/Theme/SeasonalEffects';
 
 export function Calendar() {
   const {
@@ -92,12 +93,13 @@ export function Calendar() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <SeasonalEffects currentMonth={currentMonth} />
       <DailySummaryModal notes={notes} onClose={() => {}} />
       
       {/* Fallback Toasts Container */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-24 right-4 sm:bottom-4 z-50 flex flex-col gap-2 pointer-events-none w-[calc(100%-2rem)] sm:w-auto">
         {toasts.map((toast) => (
-          <div key={toast.id} className="bg-cal-card rounded-xl shadow-lg border border-cal-border p-4 w-72 pointer-events-auto animate-slide-in-right">
+          <div key={toast.id} className="bg-cal-card rounded-xl shadow-lg border border-cal-border p-4 w-full sm:w-72 pointer-events-auto animate-slide-in-right">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h4 className="text-sm font-bold text-cal-text">{toast.title}</h4>
@@ -211,6 +213,7 @@ export function Calendar() {
             filterController={filtersController}
             currentMonth={currentMonth}
             currentYear={currentYear}
+            panelId="desktop"
           />
         </div>
       </div>
@@ -259,6 +262,7 @@ export function Calendar() {
                   filterController={filtersController}
                   currentMonth={currentMonth}
                   currentYear={currentYear}
+                  panelId="mobile"
                 />
               </div>
             </div>

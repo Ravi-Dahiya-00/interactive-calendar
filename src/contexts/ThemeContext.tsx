@@ -9,8 +9,10 @@ interface ThemeContextType {
   theme: ThemeMode;
   resolvedTheme: 'light' | 'dark';
   color: ColorTheme;
+  ambientEffects: boolean;
   setTheme: (theme: ThemeMode) => void;
   setColor: (color: ColorTheme) => void;
+  setAmbientEffects: (val: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -18,6 +20,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('system');
   const [color, setColorState] = useState<ColorTheme>('emerald');
+  const [ambientEffects, setAmbientEffectsState] = useState<boolean>(true);
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   // Load from local storage
@@ -28,6 +31,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
       const savedColor = localStorage.getItem('calendar-color') as ColorTheme | null;
       if (savedColor) setColorState(savedColor);
+
+      const savedAmbient = localStorage.getItem('calendar-ambient-effects');
+      if (savedAmbient !== null) setAmbientEffectsState(savedAmbient === 'true');
     } catch (e) {}
   }, []);
 
@@ -77,8 +83,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('calendar-color', c);
   };
 
+  const setAmbientEffects = (val: boolean) => {
+    setAmbientEffectsState(val);
+    localStorage.setItem('calendar-ambient-effects', val.toString());
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, color, setTheme, setColor }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, color, ambientEffects, setTheme, setColor, setAmbientEffects }}>
       {children}
     </ThemeContext.Provider>
   );

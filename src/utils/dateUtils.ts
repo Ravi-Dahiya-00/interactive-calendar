@@ -74,7 +74,21 @@ export function formatDateFull(date: Date): string {
 export function formatDateRange(start: Date | null, end: Date | null): string {
   if (!start) return 'No dates selected';
   if (!end || isSameDay(start, end)) return formatDateFull(start);
-  return `${formatDateShort(start)} — ${formatDateShort(end)}, ${end.getFullYear()}`;
+  
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  const startMonth = start.getMonth();
+  const endMonth = end.getMonth();
+
+  if (startYear !== endYear) {
+    return `${formatDateShort(start)}, ${startYear} — ${formatDateShort(end)}, ${endYear}`;
+  }
+
+  if (startMonth !== endMonth) {
+    return `${formatDateShort(start)} — ${formatDateShort(end)}, ${endYear}`;
+  }
+
+  return `${start.getDate()} — ${formatDateShort(end)}, ${endYear}`;
 }
 
 export function dateToISOString(date: Date): string {
