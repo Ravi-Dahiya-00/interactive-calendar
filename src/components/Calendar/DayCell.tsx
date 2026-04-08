@@ -103,7 +103,7 @@ function DayCellComponent({
   // Visual priority: Selected range > Today > Normal > Past
   const containerClasses = useMemo(() => {
     const classes = [
-      'relative h-12 w-full flex items-center justify-center text-sm transition-all duration-300 cursor-pointer select-none',
+      'relative w-full min-h-[58px] flex items-start justify-center pt-1.5 text-sm transition-all duration-300 cursor-pointer select-none rounded-md overflow-hidden',
       !day.isCurrentMonth
         ? 'text-cal-muted opacity-20 cursor-default'
         : 'text-cal-text hover:bg-cal-primary/10',
@@ -157,43 +157,45 @@ function DayCellComponent({
       aria-label={`${day.dayOfMonth}${day.isHoliday ? `, ${day.holidayName}` : ''}`}
       tabIndex={day.isCurrentMonth ? 0 : -1}
     >
-      <span className="relative z-10">{day.dayOfMonth}</span>
+      <span className="relative z-10 font-semibold">{day.dayOfMonth}</span>
       {isToday && day.isCurrentMonth && !isSelected ? (
         <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-cal-primary" />
       ) : null}
       {dayNotes.length > 0 && day.isCurrentMonth ? (
-        <div className="absolute bottom-0.5 left-0.5 right-0.5 z-20 flex flex-col gap-0.5">
-          {dayNotes.slice(0, 2).map((note) => {
-            const isDragging = draggingNoteId === note.id;
-            const isFocused = focusedEventId === note.id;
+        <div className="absolute bottom-1 left-1 right-1 z-20 flex items-center gap-1">
+          {(() => {
+            const first = dayNotes[0];
+            const isDragging = draggingNoteId === first.id;
             return (
               <button
-                key={note.id}
+                key={first.id}
                 draggable
-                onDragStart={() => onEventDragStart(note.id)}
+                onDragStart={() => onEventDragStart(first.id)}
                 onDragEnd={onEventDragEnd}
-                onKeyDown={(e) => handleEventKeyDown(e, note.id)}
-                onFocus={() => setFocusedEventId(note.id)}
-                onBlur={() => setFocusedEventId((prev) => (prev === note.id ? null : prev))}
-                className={`truncate rounded px-1 py-0.5 text-[10px] font-medium text-left border transition-all ${
+                onKeyDown={(e) => handleEventKeyDown(e, first.id)}
+                onFocus={() => setFocusedEventId(first.id)}
+                onBlur={() => setFocusedEventId((prev) => (prev === first.id ? null : prev))}
+                className={`flex-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-left border transition-all ${
                   isDragging
                     ? 'opacity-50 shadow-none'
                     : 'opacity-95 shadow-sm hover:shadow'
-                } bg-cal-card border-cal-border text-cal-text`}
-                title={note.content}
-                aria-label={`Event ${note.content}. Drag to move, or press Alt plus arrow keys to move by day or week.`}
+                } bg-cal-card/95 border-cal-border text-cal-text`}
+                title={first.content}
+                aria-label={`Event ${first.content}. Drag to move, or press Alt plus arrow keys to move by day or week.`}
               >
-                {note.content}
+                {first.content}
               </button>
             );
-          })}
+          })()}
+          {dayNotes.length > 1 ? (
+            <span className="shrink-0 rounded-md bg-cal-primary/10 text-cal-primary border border-cal-primary/20 px-1.5 py-0.5 text-[9px] font-bold">
+              +{dayNotes.length - 1}
+            </span>
+          ) : null}
           {focusedEventId ? (
             <span className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-cal-border bg-cal-card px-2 py-1 text-[10px] font-medium text-cal-muted shadow-sm">
               Alt + Arrow to move
             </span>
-          ) : null}
-          {dayNotes.length > 2 ? (
-            <span className="text-[10px] text-cal-muted px-1">+{dayNotes.length - 2} more</span>
           ) : null}
         </div>
       ) : null}
