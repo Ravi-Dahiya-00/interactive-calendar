@@ -1,3 +1,4 @@
+// Determines which seasonal animation (like rain or snow) should be active based on the current month.
 'use client';
 
 import { useMemo } from 'react';

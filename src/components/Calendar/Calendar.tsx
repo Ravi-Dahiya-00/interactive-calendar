@@ -1,3 +1,5 @@
+// Main Calendar component. Brings together the calendar grid, notes panel, analytics,
+// seasonal effects, date navigation, and theme controls in one place.
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
@@ -139,6 +141,9 @@ export function Calendar() {
         stats={analytics}
         monthName={monthName}
         isFilteredView={filtersController.hasActiveFilters}
+        notes={notes}
+        currentMonth={currentMonth}
+        currentYear={currentYear}
       />
 
       {/* Main Layout */}

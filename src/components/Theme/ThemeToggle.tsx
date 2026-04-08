@@ -1,3 +1,4 @@
+// A simple icon button to toggle between light and dark mode.
 'use client';
 
 import { useTheme } from '@/contexts/ThemeContext';

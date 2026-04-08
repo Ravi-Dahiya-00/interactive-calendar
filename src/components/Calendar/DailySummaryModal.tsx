@@ -1,3 +1,4 @@
+// Popup modal that shows a summary of notes and events for a specific day when you click on it.
 'use client';
 
 import { useEffect, useState } from 'react';

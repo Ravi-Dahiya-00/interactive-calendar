@@ -1,3 +1,4 @@
+// Monitors notes and sends browser alerts for scheduled reminders before an event starts.
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';

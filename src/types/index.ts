@@ -1,3 +1,5 @@
+// This file defines the main shapes of data used in the app, like what a Note or a CalendarDay looks like.
+
 export interface CalendarDay {
   date: Date;
   dayOfMonth: number;

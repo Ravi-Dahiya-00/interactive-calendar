@@ -1,3 +1,4 @@
+// Root layout file. Sets up the page structure, fonts, and global metadata for the whole app.
 import type { Metadata } from 'next';
 import './globals.css';
 

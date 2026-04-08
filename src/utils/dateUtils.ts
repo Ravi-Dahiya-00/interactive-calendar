@@ -1,4 +1,5 @@
-import { CalendarDay } from '@/types';
+// A collection of helper tools for formatting dates, calculating time differences, and generating the calendar grid.
+import { CalendarDay, SerializedDateRange, Note } from '@/types';
 import { getHoliday } from './holidays';
 
 export const MONTH_NAMES = [

@@ -1,4 +1,6 @@
+'use client';
 import { useState, useMemo, useEffect } from 'react';
+// Manages the filtering logic for notes, allowing users to filter by text, category, priority, and date range.
 import { Note, NoteCategory } from '@/types';
 import { isoStringToDate } from '@/utils/dateUtils';
 

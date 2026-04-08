@@ -1,3 +1,5 @@
+// Contains a list of major holidays and special days. It helps the calendar identify
+// which days should be marked as a holiday.
 interface Holiday {
   month: number; // 0-indexed
   day: number;

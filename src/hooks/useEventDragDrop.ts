@@ -1,3 +1,4 @@
+// Lets users move events to a different day by dragging and dropping them with the mouse.
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';

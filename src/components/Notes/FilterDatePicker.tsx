@@ -1,3 +1,4 @@
+// A small date picker used inside the filter panel to let users filter notes by a date range.
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';

@@ -1,3 +1,4 @@
+// Handles showing small popup messages (toasts) across the app to confirm actions like adding or deleting notes.
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';

@@ -1,3 +1,4 @@
+// A settings panel that lets users pick a color theme, toggle dark/light mode, and turn seasonal effects on or off.
 'use client';
 
 import { useState, useRef, useEffect } from 'react';

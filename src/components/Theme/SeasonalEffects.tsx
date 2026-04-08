@@ -1,3 +1,5 @@
+// Draws seasonal background animations (rain, snow, petals, fireflies, etc.) based on the current month.
+// Runs entirely in CSS with pointer-events disabled so it never blocks clicks on the calendar.
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';

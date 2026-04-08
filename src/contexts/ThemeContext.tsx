@@ -1,3 +1,5 @@
+// Manages the app's theme state: dark/light mode, accent color, and ambient seasonal effects toggle.
+// Persists user preferences to localStorage so settings are remembered on next visit.
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';

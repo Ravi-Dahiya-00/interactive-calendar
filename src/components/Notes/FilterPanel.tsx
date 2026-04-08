@@ -1,3 +1,5 @@
+'use client';
+// Filter panel for the notes list. Lets users search notes, filter by date range, category, and priority.
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { NoteCategory } from '@/types';

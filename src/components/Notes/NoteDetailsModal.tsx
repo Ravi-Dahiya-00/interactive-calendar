@@ -1,3 +1,4 @@
+// Modal that pops up when you click a note. Shows the full note content, title, dates, time, and priority.
 'use client';
 
 import { Note } from '@/types';

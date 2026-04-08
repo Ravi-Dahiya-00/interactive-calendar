@@ -1,3 +1,4 @@
+// Top bar of the calendar. Shows the current month and year, and has buttons to go back, forward, or jump to today.
 'use client';
 
 import { useState, useRef, useEffect } from 'react';

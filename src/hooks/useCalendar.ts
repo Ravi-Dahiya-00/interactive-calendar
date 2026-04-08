@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+// Handles main calendar logic like switching months, jumping to today, and building the month day grid.
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { generateMonthGrid, MONTH_NAMES } from '@/utils/dateUtils';
 import { CalendarDay, NavigationDirection } from '@/types';
 

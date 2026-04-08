@@ -1,3 +1,5 @@
+// The sidebar panel where users write, view, search, and manage their notes and events.
+// Also handles the expandable note input card, filters, and the note details modal.
 'use client';
 
 import { useState, useCallback, KeyboardEvent, useMemo, useRef, useEffect } from 'react';
@@ -334,7 +336,7 @@ export function NotesPanel({
       {/* Unified New Note Input Card */}
       <div className="p-4 sm:p-5 border-b border-cal-border bg-cal-card">
         <div 
-          className={`flex flex-col transition-all duration-300 rounded-xl border bg-cal-bg overflow-hidden ${
+          className={`relative flex flex-col transition-all duration-300 rounded-xl border bg-cal-bg ${
             isExpanded ? 'border-cal-primary/50 shadow-lg ring-4 ring-cal-primary/10' : 'border-cal-border shadow-sm hover:border-cal-primary/30'
           }`}
           onClick={() => !isExpanded && setIsExpanded(true)}
@@ -345,7 +347,7 @@ export function NotesPanel({
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="Title"
-              className="w-full px-4 pt-3 pb-1 text-base font-bold bg-transparent text-cal-text placeholder:text-cal-muted outline-none font-display"
+              className="w-full px-4 pt-3 pb-1 text-base font-bold bg-transparent rounded-t-xl text-cal-text placeholder:text-cal-muted outline-none font-display"
               autoFocus
             />
           )}
@@ -370,10 +372,9 @@ export function NotesPanel({
           
           {/* Collapsible Action Area */}
           {isExpanded && (
-            <div className="px-4 pb-3 pt-1 border-t border-cal-border/50 bg-cal-bg/50 flex flex-col gap-3 animate-fade-in">
+            <div className="px-4 pb-3 pt-1 border-t border-cal-border/50 flex flex-col gap-3 animate-fade-in rounded-b-xl bg-cal-bg/50">
               {/* Time and Reminder Selection */}
-        {hasRange && !isSelectingEnd && (
-          <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
             <div className="relative" ref={timeMenuRef}>
               <button
                 onClick={() => setIsTimeMenuOpen(!isTimeMenuOpen)}
@@ -488,9 +489,7 @@ export function NotesPanel({
               </>
             )}
           </div>
-        )}
-
-        {/* Priority Selection & Submit Row */}
+           
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 gap-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-medium text-cal-muted mr-1">Priority:</span>
@@ -622,11 +621,11 @@ export function NotesPanel({
                     onClick={() => setActiveNote(note)}
                   >
                     {note.title && (
-                      <h4 className="text-[15px] font-bold text-cal-text group-hover:text-cal-primary transition-colors truncate mb-1">
+                      <h4 className="text-base sm:text-lg font-extrabold text-cal-text tracking-tight group-hover:text-cal-primary transition-colors truncate mb-0.5 font-display">
                         {note.title}
                       </h4>
                     )}
-                    <p className={`text-sm text-cal-text whitespace-pre-wrap break-words ${note.title ? 'text-cal-muted line-clamp-2' : 'group-hover:text-cal-primary transition-colors'}`}>
+                    <p className={`text-sm whitespace-pre-wrap break-words leading-relaxed ${note.title ? 'text-cal-muted/70 line-clamp-2' : 'text-[15px] text-cal-text group-hover:text-cal-primary transition-colors font-medium'}`}>
                       <SearchMatchHighlight text={note.content} query={debouncedSearch} />
                     </p>
                     <div className="flex items-center flex-wrap gap-2 mt-2.5">
@@ -653,11 +652,11 @@ export function NotesPanel({
                           )}
                         </span>
                       )}
-                      <span className="text-xs text-cal-muted font-medium">
+                      <span className="text-[11px] text-cal-muted/60 font-semibold tracking-wide">
                         {formatNoteDate(note)}
                       </span>
-                      <span className="text-xs text-cal-muted/50">·</span>
-                      <span className="text-xs text-cal-muted">
+                      <span className="text-[11px] text-cal-muted/40">·</span>
+                      <span className="text-[11px] text-cal-muted/60 font-medium">
                         {formatTimestamp(note.createdAt)}
                       </span>
                     </div>

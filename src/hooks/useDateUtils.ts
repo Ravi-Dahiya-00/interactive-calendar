@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
+// A simple hook that gives other components easy access to date formatting and calculation tools.
 import {
-  isSameDay,
-  isToday,
   isPast,
   isFuture,
   isWithinRange,
@@ -12,8 +11,6 @@ import {
 export function useDateUtils() {
   return useMemo(
     () => ({
-      isSameDay,
-      isToday,
       isPast,
       isFuture,
       isWithinRange,

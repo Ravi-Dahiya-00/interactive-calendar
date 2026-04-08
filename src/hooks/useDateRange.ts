@@ -1,5 +1,6 @@
 'use client';
 
+// Manages selecting a range of dates on the calendar by clicking and dragging.
 import { useState, useCallback } from 'react';
 import { DateRange } from '@/types';
 import { isSameDay, normalizeDate, isBeforeDate, isDateInRange } from '@/utils/dateUtils';

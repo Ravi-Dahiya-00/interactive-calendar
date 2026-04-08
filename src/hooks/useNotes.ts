@@ -1,3 +1,4 @@
+// Stores and manages all notes in the browser's local memory so they stay saved when you refresh.
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

@@ -1,5 +1,9 @@
 'use client';
 
+import { memo } from 'react';
+
+// A reusable empty state UI shown when there are no notes or search results.
+// Accepts a title, description, hint text, keyboard shortcuts, and optional action buttons.
 interface EmptyStateProps {
   title: string;
   description: string;

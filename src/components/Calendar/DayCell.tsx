@@ -1,3 +1,4 @@
+// Represents a single day square in the calendar grid. Handles hover, selection highlight, holidays, and drag events.
 'use client';
 
 import { memo, useCallback, useMemo, useState } from 'react';

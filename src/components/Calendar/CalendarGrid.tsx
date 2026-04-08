@@ -1,3 +1,4 @@
+// Renders the full month grid of days. Handles drag-to-select animations and arranges DayCell rows.
 'use client';
 
 import { useMemo, useState } from 'react';

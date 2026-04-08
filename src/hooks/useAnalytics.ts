@@ -1,3 +1,4 @@
+// Calculates stats like total events, high priority count, and upcoming items for the dashboard.
 import { useMemo } from 'react';
 import { Note } from '@/types';
 import { isoStringToDate } from '@/utils/dateUtils';

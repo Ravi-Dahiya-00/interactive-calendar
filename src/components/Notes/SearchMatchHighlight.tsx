@@ -1,3 +1,7 @@
+// Highlights matching text in a note when the user types a search query.
+// Wraps matching characters in a yellow highlight span.
+import { memo } from 'react';
+
 interface SearchMatchHighlightProps {
   text: string;
   query: string;
