@@ -64,10 +64,9 @@ export function Calendar() {
   const { toasts, removeToast } = useReminders(notes, updateNote);
   const [isMobileNotesOpen, setIsMobileNotesOpen] = useState(false);
   const analytics = useAnalytics({
-    notes,
+    notes, // Fixed: Always use full notes for dashboard counts
     currentMonth,
     currentYear,
-    scopedNotes: filtersController.hasActiveFilters ? filtersController.filteredNotes : notes,
   });
 
   // Keyboard navigation
@@ -94,7 +93,12 @@ export function Calendar() {
   const animationKey = `${currentMonth}-${currentYear}`;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <div 
+      className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) clearRange();
+      }}
+    >
       <SeasonalEffects currentMonth={currentMonth} />
       <DailySummaryModal notes={notes} onClose={() => {}} />
       

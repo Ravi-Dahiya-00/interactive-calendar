@@ -203,13 +203,14 @@ export function NotesPanel({
 
   const isNoteInCurrentMonth = useCallback(
     (note: Note) => {
-      const referenceDate = note.dateRange?.start
-        ? isoStringToDate(note.dateRange.start)
-        : new Date(note.createdAt);
-      return (
-        referenceDate.getMonth() === currentMonth &&
-        referenceDate.getFullYear() === currentYear
-      );
+      const start = note.dateRange?.start ? isoStringToDate(note.dateRange.start) : new Date(note.createdAt);
+      const end = note.dateRange?.end ? isoStringToDate(note.dateRange.end) : start;
+      
+      const monthStart = new Date(currentYear, currentMonth, 1);
+      const monthEnd = new Date(currentYear, currentMonth + 1, 0);
+
+      // A note is in the current month if its range overlaps with the current month's bounds
+      return start <= monthEnd && end >= monthStart;
     },
     [currentMonth, currentYear]
   );

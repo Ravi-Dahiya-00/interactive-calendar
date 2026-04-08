@@ -1,7 +1,7 @@
 'use client';
 
 // Manages selecting a range of dates on the calendar by clicking and dragging.
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DateRange } from '@/types';
 import { isSameDay, normalizeDate, isBeforeDate, isDateInRange } from '@/utils/dateUtils';
 
@@ -10,58 +10,22 @@ export function useDateRange() {
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const setOrderedRange = useCallback((first: Date, second: Date) => {
-    if (isBeforeDate(second, first)) {
-      setRange({ start: second, end: first });
-    } else {
-      setRange({ start: first, end: second });
-    }
-  }, []);
-
   const handleMouseDown = useCallback((date: Date) => {
     const normalized = normalizeDate(date);
 
-    // Toggle off when user clicks the same selected date again.
-    if (
-      range.start &&
-      isSameDay(range.start, normalized) &&
-      (
-        (range.end === null) ||
-        isSameDay(range.end, normalized)
-      )
-    ) {
+    // If clicking same date that is already selection start/end, and it is a single-day range, clear it
+    if (range.start && isSameDay(range.start, normalized) && (!range.end || isSameDay(range.end, normalized))) {
       setRange({ start: null, end: null });
       setHoveredDate(null);
       setIsDragging(false);
       return;
     }
 
-    // If a multi-day range already exists, clicking anywhere starts a new selection.
-    if (range.start && range.end && !isSameDay(range.start, range.end)) {
-      setRange({ start: normalized, end: null });
-      setHoveredDate(normalized);
-      setIsDragging(true);
-      return;
-    }
-
-    // If a single-day selection already exists, next click completes a range.
-    // This enables cross-month/year selection after navigation.
-    if (
-      range.start &&
-      range.end &&
-      isSameDay(range.start, range.end) &&
-      !isSameDay(range.start, normalized)
-    ) {
-      setOrderedRange(range.start, normalized);
-      setHoveredDate(null);
-      setIsDragging(false);
-      return;
-    }
-
+    // Always start a new selection on mouse down
     setRange({ start: normalized, end: null });
     setHoveredDate(normalized);
     setIsDragging(true);
-  }, [range.start, range.end, setOrderedRange]);
+  }, [range]);
 
   const handleMouseEnterDay = useCallback((date: Date) => {
     const normalized = normalizeDate(date);
@@ -77,11 +41,26 @@ export function useDateRange() {
     const start = range.start;
     const end = hoveredDate;
 
-    setOrderedRange(start, end);
+    if (isBeforeDate(end, start)) {
+      setRange({ start: end, end: start });
+    } else {
+      setRange({ start, end });
+    }
     
     setIsDragging(false);
     setHoveredDate(null);
-  }, [isDragging, range.start, hoveredDate, setOrderedRange]);
+  }, [isDragging, range.start, hoveredDate]);
+
+  // Handle global mouseup to ensure drag ends even if released outside the calendar
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isDragging) {
+      const globalMouseUp = () => {
+        handleMouseUp();
+      };
+      window.addEventListener('mouseup', globalMouseUp);
+      return () => window.removeEventListener('mouseup', globalMouseUp);
+    }
+  }, [isDragging, handleMouseUp]);
 
   const handleMouseLeave = useCallback(() => {
     if (!isDragging) {
@@ -112,10 +91,9 @@ export function useDateRange() {
     if (!isDragging || !range.start || !hoveredDate) return false;
     const start = range.start;
     const end = hoveredDate;
-    if (isBeforeDate(end, start)) {
-      return isDateInRange(date, end, start);
-    }
-    return isDateInRange(date, start, end);
+    
+    const [realStart, realEnd] = isBeforeDate(end, start) ? [end, start] : [start, end];
+    return isDateInRange(date, realStart, realEnd);
   }, [isDragging, range.start, hoveredDate]);
 
   const isPreviewStart = useCallback((date: Date): boolean => {

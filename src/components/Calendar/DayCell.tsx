@@ -103,37 +103,34 @@ function DayCellComponent({
   // Visual priority: Selected range > Today > Normal > Past
   const containerClasses = useMemo(() => {
     const classes = [
-      'relative h-10 w-full flex items-center justify-center text-sm transition-all duration-200 cursor-pointer select-none rounded-md',
+      'relative h-12 w-full flex items-center justify-center text-sm transition-all duration-300 cursor-pointer select-none',
       !day.isCurrentMonth
-        ? 'text-cal-muted opacity-30 cursor-default'
-        : 'text-cal-text hover:bg-cal-border/50 hover:shadow-sm',
+        ? 'text-cal-muted opacity-20 cursor-default'
+        : 'text-cal-text hover:bg-cal-primary/10',
     ];
 
-    if (isSelected) {
-      classes.push('bg-cal-primary/15 text-cal-primary-dark font-semibold');
-      if (isStart || isEnd) {
-        classes.push('bg-cal-primary text-cal-bg font-bold shadow-md z-10');
-        if (isStart) classes.push('rounded-l-lg');
-        if (isEnd) classes.push('rounded-r-lg');
-        if (isStart && isEnd) classes.push('rounded-lg');
-      }
-    } else if (isToday && day.isCurrentMonth) {
-      classes.push('ring-2 ring-cal-primary/70 ring-inset bg-cal-primary/5 font-semibold');
-    } else if (isPast) {
-      classes.push('text-cal-muted/80 opacity-70');
-    } else if (isFuture) {
-      classes.push('text-cal-text');
-    }
+    const isSelectedRange = isStart || isEnd || isInRange;
+    const isUnderPreview = isPreviewStart || isPreviewEnd || isInPreview;
 
-    if (isPreviewStart || isPreviewEnd || isInPreview) {
-      classes.push('bg-cal-primary/5 border-y border-cal-primary/20');
-      if (isPreviewStart) classes.push('rounded-l-lg border-l');
-      if (isPreviewEnd) classes.push('rounded-r-lg border-r');
+    if (isSelectedRange) {
+      classes.push('bg-cal-primary/20 text-cal-primary-dark font-bold');
+      if (isStart) classes.push('rounded-l-xl bg-gradient-to-r from-cal-primary to-cal-primary/20 text-white shadow-md z-20 scale-105');
+      if (isEnd) classes.push('rounded-r-xl bg-gradient-to-l from-cal-primary to-cal-primary/20 text-white shadow-md z-20 scale-105');
+      if (isStart && isEnd) classes.push('rounded-xl bg-cal-primary shadow-xl scale-110');
+    } else if (isUnderPreview) {
+      classes.push('bg-amber-100/50 border-y-2 border-dashed border-amber-400/30 text-amber-700');
+      if (isPreviewStart) classes.push('rounded-l-xl border-l-2');
+      if (isPreviewEnd) classes.push('rounded-r-xl border-r-2');
+    } else if (isToday && day.isCurrentMonth) {
+      classes.push('ring-2 ring-cal-primary/50 bg-cal-primary-50 rounded-xl font-extrabold text-cal-primary');
+    } else if (isPast) {
+      classes.push('opacity-40 grayscale-[0.5]');
     }
 
     if (isDropTarget && day.isCurrentMonth) {
-      classes.push('ring-2 ring-cal-primary/60 ring-inset shadow-lg');
+      classes.push('ring-4 ring-cal-accent ring-opacity-50 scale-105 shadow-2xl z-30 bg-cal-accent/10');
     }
+    
     return classes.join(' ');
   }, [
     day.isCurrentMonth,

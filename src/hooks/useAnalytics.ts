@@ -25,29 +25,37 @@ export function useAnalytics({
   notes,
   currentMonth,
   currentYear,
-  scopedNotes,
 }: UseAnalyticsParams): AnalyticsStats {
   return useMemo(() => {
-    const sourceNotes = scopedNotes ?? notes;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const eventNotes = sourceNotes.filter((note) => getEventStartDate(note) !== null);
+    const monthStart = new Date(currentYear, currentMonth, 1);
+    const monthEnd = new Date(currentYear, currentMonth + 1, 0);
 
-    const totalEventsInMonth = eventNotes.filter((note) => {
+    // 1. Total Events: Count dated events overlapping the month OR general notes created in this month
+    const totalEventsInMonth = notes.filter((note) => {
       const startDate = getEventStartDate(note);
-      return (
-        startDate !== null &&
-        startDate.getMonth() === currentMonth &&
-        startDate.getFullYear() === currentYear
-      );
+      
+      if (startDate) {
+        const start = startDate;
+        const endDateIso = note.dateRange?.end;
+        const end = endDateIso ? isoStringToDate(endDateIso) : start;
+        return start <= monthEnd && end >= monthStart;
+      }
+      
+      // For general notes, count if they were created within this visual month range
+      const createdAt = new Date(note.createdAt);
+      return createdAt >= monthStart && createdAt <= monthEnd;
     }).length;
 
-    const highPriorityEvents = eventNotes.filter(
+    // 2. High Priority: Global count of all high priority items (Always visible/connected)
+    const highPriorityEvents = notes.filter(
       (note) => note.priority === 'high'
     ).length;
 
-    const upcomingEvents = eventNotes.filter((note) => {
+    // 3. Upcoming: Any dated event in the future
+    const upcomingEvents = notes.filter((note) => {
       const startDate = getEventStartDate(note);
       return startDate !== null && startDate >= today;
     }).length;
@@ -57,5 +65,5 @@ export function useAnalytics({
       highPriorityEvents,
       upcomingEvents,
     };
-  }, [notes, scopedNotes, currentMonth, currentYear]);
+  }, [notes, currentMonth, currentYear]);
 }

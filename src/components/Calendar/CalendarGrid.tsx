@@ -66,11 +66,19 @@ export function CalendarGrid({
   const notesByDate = useMemo(() => {
     const map = new Map<string, Note[]>();
     for (const note of notes) {
-      const start = note.dateRange?.start;
-      if (!start) continue;
-      const list = map.get(start) ?? [];
-      list.push(note);
-      map.set(start, list);
+      if (!note.dateRange?.start) continue;
+      
+      const start = isoStringToDate(note.dateRange.start);
+      const end = note.dateRange.end ? isoStringToDate(note.dateRange.end) : start;
+      
+      const current = new Date(start);
+      while (current <= end) {
+        const iso = dateToISOString(current);
+        const list = map.get(iso) ?? [];
+        list.push(note);
+        map.set(iso, list);
+        current.setDate(current.getDate() + 1);
+      }
     }
     return map;
   }, [notes]);

@@ -39,7 +39,7 @@ export function isDateInRange(date: Date, start: Date | null, end: Date | null):
   const time = normalizeDate(date).getTime();
   const startTime = normalizeDate(start).getTime();
   const endTime = normalizeDate(end).getTime();
-  return time > startTime && time < endTime;
+  return time >= startTime && time <= endTime;
 }
 
 export function isBeforeDate(d1: Date, d2: Date): boolean {
@@ -56,6 +56,15 @@ export function isPastDate(date: Date): boolean {
 
 export function isFutureDate(date: Date): boolean {
   return normalizeDate(date).getTime() > normalizeDate(new Date()).getTime();
+}
+
+export function isRangeOverlappingMonth(start: Date, end: Date, month: number, year: number): boolean {
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0);
+  return (
+    normalizeDate(start).getTime() <= monthEnd.getTime() &&
+    normalizeDate(end).getTime() >= monthStart.getTime()
+  );
 }
 
 // Explicit alias exports requested by rubric

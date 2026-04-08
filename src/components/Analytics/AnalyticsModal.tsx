@@ -1,10 +1,10 @@
-// Full-screen analytics modal. Opens when clicking a stat card and shows a breakdown
-// of events by priority, category, and a scrollable task list with all related notes.
+// Full-screen analytics modal. Restored to a professional, clean interface
+// while maintaining interactive task details.
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
 import { Note } from '@/types';
 import { isoStringToDate, formatDateRange } from '@/utils/dateUtils';
-import { useEffect, useRef } from 'react';
 
 type AnalyticsView = 'totalEventsInMonth' | 'highPriorityEvents' | 'upcomingEvents';
 
@@ -30,22 +30,15 @@ function formatNoteDate(note: Note): string {
 }
 
 const PRIORITY_CONFIG = {
-  high: { label: 'High', dot: 'bg-rose-500', badge: 'bg-rose-500/10 text-rose-500 border-rose-500/20' },
-  medium: { label: 'Medium', dot: 'bg-amber-500', badge: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-  low: { label: 'Low', dot: 'bg-green-500', badge: 'bg-green-500/10 text-green-500 border-green-500/20' },
+  high: { label: 'High', dot: 'bg-rose-500', badge: 'bg-rose-500 text-white' },
+  medium: { label: 'Medium', dot: 'bg-amber-500', badge: 'bg-amber-500 text-white' },
+  low: { label: 'Low', dot: 'bg-emerald-500', badge: 'bg-emerald-500 text-white' },
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  work: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  personal: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  study: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  other: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-};
-
-const VIEW_META: Record<AnalyticsView, { title: string; icon: React.ReactNode; accentClass: string }> = {
+const VIEW_CONFIG: Record<AnalyticsView, { title: string; icon: React.ReactNode; accent: string }> = {
   totalEventsInMonth: {
     title: 'Events This Month',
-    accentClass: 'text-blue-400',
+    accent: 'text-blue-500',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -54,7 +47,7 @@ const VIEW_META: Record<AnalyticsView, { title: string; icon: React.ReactNode; a
   },
   highPriorityEvents: {
     title: 'High Priority Events',
-    accentClass: 'text-rose-400',
+    accent: 'text-rose-500',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.12 12.3A1 1 0 004.03 18h15.94a1 1 0 00.86-1.5l-7.12-12.3a1 1 0 00-1.72 0z" />
@@ -63,7 +56,7 @@ const VIEW_META: Record<AnalyticsView, { title: string; icon: React.ReactNode; a
   },
   upcomingEvents: {
     title: 'Upcoming Events',
-    accentClass: 'text-emerald-400',
+    accent: 'text-emerald-500',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -73,203 +66,211 @@ const VIEW_META: Record<AnalyticsView, { title: string; icon: React.ReactNode; a
 };
 
 export function AnalyticsModal({ view, notes, monthName, currentMonth, currentYear, onClose }: AnalyticsModalProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
   useEffect(() => {
-    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedNote) setSelectedNote(null);
+        else onClose();
+      }
+    };
     document.addEventListener('keydown', handle);
     document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', handle); document.body.style.overflow = 'auto'; };
-  }, [onClose]);
+    return () => {
+      document.removeEventListener('keydown', handle);
+      document.body.style.overflow = 'auto';
+    };
+  }, [onClose, selectedNote]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Compute the filtered notes for the selected view
-  const filteredNotes = notes.filter((note) => {
-    const d = getNoteDate(note);
-    if (view === 'totalEventsInMonth') {
-      return d !== null && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    }
-    if (view === 'highPriorityEvents') {
-      return d !== null && note.priority === 'high';
-    }
-    if (view === 'upcomingEvents') {
-      return d !== null && d >= today;
-    }
-    return false;
-  });
+  const filteredNotes = useMemo(() => {
+    return notes.filter((note) => {
+      const startDate = getNoteDate(note);
+      if (view === 'totalEventsInMonth') {
+        if (startDate) {
+          const endIso = note.dateRange?.end;
+          const end = endIso ? isoStringToDate(endIso) : startDate;
+          const monthStart = new Date(currentYear, currentMonth, 1);
+          const monthEnd = new Date(currentYear, currentMonth + 1, 0);
+          return startDate <= monthEnd && end >= monthStart;
+        }
+        const createdAt = new Date(note.createdAt);
+        return createdAt.getMonth() === currentMonth && createdAt.getFullYear() === currentYear;
+      }
+      if (view === 'highPriorityEvents') return note.priority === 'high';
+      if (view === 'upcomingEvents') return startDate !== null && startDate >= today;
+      return false;
+    });
+  }, [notes, view, currentMonth, currentYear, today]);
 
-  // Compute category breakdown
-  const categoryCounts: Record<string, number> = {};
-  filteredNotes.forEach((n) => {
-    const cat = n.category ?? 'other';
-    categoryCounts[cat] = (categoryCounts[cat] ?? 0) + 1;
-  });
+  const stats = useMemo(() => {
+    const categories: Record<string, number> = {};
+    const priorities = { high: 0, medium: 0, low: 0 };
+    filteredNotes.forEach((n) => {
+      const cat = n.category ?? 'other';
+      categories[cat] = (categories[cat] ?? 0) + 1;
+      if (n.priority) priorities[n.priority]++;
+    });
+    return { categories, priorities };
+  }, [filteredNotes]);
 
-  // Priority breakdown for total view
-  const priorityCounts = { high: 0, medium: 0, low: 0 };
-  filteredNotes.forEach((n) => { if (n.priority) priorityCounts[n.priority]++; });
+  const sortedNotes = useMemo(() => {
+    return [...filteredNotes].sort((a, b) => {
+      if (view === 'upcomingEvents') {
+        return (getNoteDate(a)?.getTime() ?? 0) - (getNoteDate(b)?.getTime() ?? 0);
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [filteredNotes, view]);
 
-  const meta = VIEW_META[view];
-  const total = filteredNotes.length;
-
-  // Sort by date ascending for upcoming, else descending by creation
-  const sorted = [...filteredNotes].sort((a, b) => {
-    if (view === 'upcomingEvents') {
-      const da = getNoteDate(a)?.getTime() ?? 0;
-      const db = getNoteDate(b)?.getTime() ?? 0;
-      return da - db;
-    }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const config = VIEW_CONFIG[view];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fade-in">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div
-        ref={containerRef}
-        className="relative w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-cal-card border border-cal-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
-      >
+      <div className="relative w-full max-w-2xl max-h-[90vh] bg-cal-card border border-cal-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-cal-border shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-cal-border shrink-0">
           <div className="flex items-center gap-3">
-            <span className={`${meta.accentClass}`}>{meta.icon}</span>
+            <span className={config.accent}>{config.icon}</span>
             <div>
-              <h2 className="text-lg font-bold text-cal-text font-display">{meta.title}</h2>
-              <p className="text-xs text-cal-muted mt-0.5">{monthName} · {total} {total === 1 ? 'event' : 'events'}</p>
+              <h2 className="text-lg font-bold text-cal-text font-display uppercase tracking-wide">{config.title}</h2>
+              <p className="text-xs text-cal-muted mt-0.5">{monthName} · {filteredNotes.length} items</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-cal-muted hover:bg-cal-border hover:text-cal-text transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button onClick={onClose} className="p-2 rounded-xl text-cal-muted hover:bg-cal-bg hover:text-cal-text transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
-        </div>
+        </header>
 
-        <div className="overflow-y-auto custom-scrollbar flex-1">
-          {/* Summary Breakdown */}
-          {total > 0 && (
-            <div className="px-6 pt-5 pb-3 grid grid-cols-2 gap-3">
-              {/* Priority breakdown */}
-              <div className="bg-cal-bg rounded-xl p-4 border border-cal-border/50">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">Priority Split</p>
-                <div className="space-y-2">
-                  {(['high', 'medium', 'low'] as const).map((p) => {
-                    const count = priorityCounts[p];
-                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                    const cfg = PRIORITY_CONFIG[p];
-                    return (
-                      <div key={p} className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                        <div className="flex-1 bg-cal-border/40 rounded-full h-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full ${cfg.dot} transition-all duration-700`} style={{ width: `${pct}%` }} />
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+            
+            {/* Stats section */}
+            {filteredNotes.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <article className="bg-cal-bg rounded-xl p-4 border border-cal-border">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">Priorities</p>
+                  <div className="space-y-2">
+                    {(['high', 'medium', 'low'] as const).map(p => {
+                      const count = stats.priorities[p];
+                      const pct = Math.round((count / filteredNotes.length) * 100) || 0;
+                      const cfg = PRIORITY_CONFIG[p];
+                      return (
+                        <div key={p} className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                          <div className="flex-1 bg-cal-border h-1.5 rounded-full overflow-hidden">
+                            <div className={`h-full ${cfg.dot}`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[10px] font-bold text-cal-muted w-4 text-right">{count}</span>
                         </div>
-                        <span className="text-[11px] text-cal-muted font-semibold w-4 text-right">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </article>
+                <article className="bg-cal-bg rounded-xl p-4 border border-cal-border">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">Categories</p>
+                   <div className="flex flex-wrap gap-1.5">
+                     {Object.entries(stats.categories).map(([cat, count]) => (
+                       <div key={cat} className="text-[10px] font-bold px-2 py-1 bg-cal-card border border-cal-border rounded text-cal-text uppercase">
+                         {cat} · {count}
+                       </div>
+                     ))}
+                   </div>
+                </article>
               </div>
+            )}
 
-              {/* Category breakdown */}
-              <div className="bg-cal-bg rounded-xl p-4 border border-cal-border/50">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">Categories</p>
-                <div className="flex flex-col gap-1.5">
-                  {Object.entries(categoryCounts).length > 0 ? Object.entries(categoryCounts).map(([cat, count]) => (
-                    <div key={cat} className="flex items-center justify-between">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.other}`}>
-                        {cat}
-                      </span>
-                      <span className="text-xs font-bold text-cal-muted">{count}</span>
-                    </div>
-                  )) : (
-                    <p className="text-[11px] text-cal-muted/50">No categories set</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Task List */}
-          <div className="px-6 pb-6 pt-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-cal-muted mb-3">
-              {total > 0 ? 'All Events' : 'No Events Found'}
-            </p>
-
-            {total === 0 ? (
-              <div className="flex flex-col items-center py-12 gap-3 text-center">
-                <span className={`text-5xl opacity-20 ${meta.accentClass}`}>{meta.icon}</span>
-                <p className="text-cal-muted text-sm font-medium">Nothing to show here yet.</p>
-                <p className="text-cal-muted/50 text-xs max-w-xs">
-                  {view === 'totalEventsInMonth' && `No events have been added for ${monthName}.`}
-                  {view === 'highPriorityEvents' && 'Great! You have no high priority events.'}
-                  {view === 'upcomingEvents' && 'You\'re all caught up — no upcoming events scheduled.'}
-                </p>
+            {/* List */}
+            {sortedNotes.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-cal-muted text-sm font-medium">Nothing logged for this view yet.</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
-                {sorted.map((note) => {
-                  const p = note.priority ?? 'medium';
-                  const cfg = PRIORITY_CONFIG[p];
-                  const d = getNoteDate(note);
-                  const daysUntil = d ? Math.ceil((d.getTime() - today.getTime()) / 86400000) : null;
-
+              <div className="space-y-3">
+                {sortedNotes.map((note) => {
+                  const cfg = PRIORITY_CONFIG[note.priority || 'medium'];
                   return (
-                    <div key={note.id} className="group flex items-start gap-4 bg-cal-bg rounded-xl px-4 py-3.5 border border-cal-border/50 hover:border-cal-primary/30 hover:shadow-md transition-all duration-200">
-                      <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${cfg.dot} opacity-80`} />
-                      <div className="flex-1 min-w-0">
-                        {note.title && (
-                          <p className="text-sm font-bold text-cal-text truncate mb-0.5">{note.title}</p>
-                        )}
-                        {note.content && (
-                          <p className={`text-sm leading-relaxed ${note.title ? 'text-cal-muted/70 line-clamp-2' : 'text-cal-text font-medium'}`}>
-                            {note.content}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${cfg.badge}`}>
-                            {cfg.label}
-                          </span>
-                          {note.category && (
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${CATEGORY_COLORS[note.category] ?? CATEGORY_COLORS.other}`}>
-                              {note.category}
-                            </span>
-                          )}
-                          {note.eventTime && (
-                            <span className="text-[10px] text-cal-muted font-semibold flex items-center gap-1">
-                              <svg className="w-3 h-3 text-cal-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {note.eventTime}{note.eventEndTime ? ` – ${note.eventEndTime}` : ''}
-                            </span>
-                          )}
-                          <span className="text-[10px] text-cal-muted/60">{formatNoteDate(note)}</span>
+                    <button
+                      key={note.id}
+                      onClick={() => setSelectedNote(note)}
+                      className="w-full text-left p-4 rounded-xl border border-cal-border bg-cal-bg hover:border-cal-primary transition-all flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={`w-1 h-8 rounded-full ${cfg.dot} opacity-60`} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-cal-text truncate">{note.title || 'Untitled'}</p>
+                          <p className="text-[10px] text-cal-muted font-bold uppercase tracking-wider">{formatNoteDate(note)}</p>
                         </div>
                       </div>
-
-                      {/* Days Until badge for upcoming */}
-                      {view === 'upcomingEvents' && daysUntil !== null && (
-                        <div className={`flex-shrink-0 text-center rounded-xl px-2 py-1.5 ${
-                          daysUntil === 0 ? 'bg-rose-500/10 text-rose-500' :
-                          daysUntil <= 3 ? 'bg-amber-500/10 text-amber-500' :
-                          'bg-emerald-500/10 text-emerald-500'
-                        }`}>
-                          <p className="text-lg font-extrabold leading-none">{daysUntil}</p>
-                          <p className="text-[9px] font-bold uppercase tracking-wide opacity-80">{daysUntil === 1 ? 'day' : 'days'}</p>
-                        </div>
-                      )}
-                    </div>
+                      <span className="text-[10px] font-bold text-cal-primary opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest text-right shrink-0">Details</span>
+                    </button>
                   );
                 })}
               </div>
             )}
-          </div>
         </div>
+
+        {/* Task Detail View Overlay */}
+        {selectedNote && (
+          <div className="absolute inset-0 z-50 bg-cal-card animate-fade-in flex flex-col">
+            <header className="px-6 py-4 border-b border-cal-border flex items-center justify-between shrink-0">
+              <button onClick={() => setSelectedNote(null)} className="flex items-center gap-2 text-cal-primary font-bold text-xs uppercase tracking-widest hover:text-cal-primary-dark transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg>
+                Back to List
+              </button>
+              <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${PRIORITY_CONFIG[selectedNote.priority || 'medium'].badge}`}>
+                {selectedNote.priority}
+              </div>
+            </header>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+               <div className="mb-6 pb-6 border-b border-cal-border">
+                  <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-cal-muted uppercase tracking-[0.2em]">
+                    <span className={`w-2 h-2 rounded-full ${PRIORITY_CONFIG[selectedNote.priority || 'medium'].dot}`} />
+                    {selectedNote.category || 'General'}
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-cal-text font-display leading-tight">{selectedNote.title || 'Untitled Note'}</h3>
+               </div>
+               
+               <div className="mb-8">
+                  <h4 className="text-[10px] font-bold text-cal-muted uppercase tracking-widest mb-3 opacity-60">Activity Details</h4>
+                  <div className="p-5 bg-cal-bg border border-cal-border rounded-xl">
+                    <p className="text-sm text-cal-text leading-relaxed whitespace-pre-wrap font-medium">
+                      {selectedNote.content || 'No description provided.'}
+                    </p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4 pt-6 border-t border-cal-border">
+                 <div>
+                   <h4 className="text-[10px] font-bold text-cal-muted uppercase tracking-widest mb-2 opacity-60">Scheduled Time</h4>
+                   <p className="text-sm font-extrabold text-cal-text flex items-center gap-2">
+                     <svg className="w-4 h-4 text-cal-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     {selectedNote.eventTime || '--:--'} {selectedNote.eventEndTime ? ` → ${selectedNote.eventEndTime}` : ''}
+                   </p>
+                 </div>
+                 <div>
+                   <h4 className="text-[10px] font-bold text-cal-muted uppercase tracking-widest mb-2 opacity-60">Date Range</h4>
+                   <p className="text-sm font-extrabold text-cal-text flex items-center gap-2">
+                     <svg className="w-4 h-4 text-cal-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                     {formatNoteDate(selectedNote)}
+                   </p>
+                 </div>
+               </div>
+            </div>
+            
+            <footer className="p-6 border-t border-cal-border shrink-0">
+               <button onClick={onClose} className="w-full h-12 rounded-xl bg-cal-primary text-white font-bold tracking-widest uppercase text-xs hover:bg-cal-primary-dark transition-all transform active:scale-[0.98]">
+                 Go to Calendar
+               </button>
+            </footer>
+          </div>
+        )}
       </div>
     </div>
   );
