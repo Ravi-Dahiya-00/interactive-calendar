@@ -15,9 +15,13 @@
 
 <div align="center">
 
-`> STATUS: DEPLOYED` &nbsp; `> BUILD: PASSING` &nbsp; `> VERSION: 1.0.0`
+[![Live Demo](https://img.shields.io/badge/DEMO-Live_Preview-0070f3?style=for-the-badge&logo=vercel&logoColor=white)](https://interactive-calendar-kappa.vercel.app/)
+&nbsp;
+[![Source Code](https://img.shields.io/badge/SOURCE-GitHub_Repo-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ravi-Dahiya-00/interactive-calendar)
 
-**[ [🔗 LIVE_DEMO](https://interactive-calendar-kappa.vercel.app/) ]** &nbsp;·&nbsp; **[ [💻 SOURCE](https://github.com/Ravi-Dahiya-00/interactive-calendar) ]**
+<br/>
+
+`> STATUS: PREMIUM_UPGRADE_COMPLETE` &nbsp; `> BUILD: OPTIMIZED` &nbsp; `> VERSION: 2.0.0`
 
 </div>
 
@@ -25,24 +29,27 @@
 
 ## `> whoami`
 
-A highly responsive, feature-rich interactive calendar application engineered with **Next.js 14**, **React 18**, and **TypeScript**. This project demonstrates an advanced understanding of modern web development, intricate component state management, and elegant UI/UX design.
+A state-of-the-art, interactive calendar and productivity engine built with **Next.js 14**, **React 18**, and **advanced TypeScript**.
 
-It features a fully functional event management system complete with multi-faceted filtering, a beautifully crafted calendar grid, and robust client-side storage solutions — built strictly focusing on best practices and performance optimizations.
+This project provides a professional-grade experience for managing time and notes. It features a "Quick-Capture" notes system (like Google Keep), an interactive analytics dashboard, and dynamic ambient environment effects that change throughout the year.
 
 ---
 
 ## `> cat features.log`
 
 ```
-[✓] Interactive Wall-Calendar Grid ............ Dynamic, scalable calendar with seamless day-range selections
-[✓] Notes & Event Management .................. Full CRUD with category classification & priority levels (Low/Med/High)
-[✓] Search & Filtering Engine ................. Real-time inline search with text-match highlighting
-[✓]   ├── Date Range Filter ................... Glassmorphic dropdown with start/end date validation
-[✓]   ├── Category Filter ..................... Filter events by custom categories
-[✓]   └── Priority Filter ..................... Filter by Low, Medium, High priority
-[✓] Local Storage Persistence ................. All notes, calendar states & configs survive browser sessions
-[✓] Premium UI/UX ............................ Glassmorphism, micro-animations, color-coded hover states
-[✓] Mobile-First Responsive Design ........... Flawless scaling from mobile to ultra-wide displays
+[✦] Interactive Analytics Dashboard .......... Clickable stat cards with progress bars & deep-dive modals
+[✦] Google Keep Style Notes ................. Unified capture UI with titles, time, and reminders
+[✦] Ambient Seasonal Effects ................ Dynamic month-based animations (Rain, Snow, Fireflies, Petals)
+[✦] Drag-to-Select UX ....................... Premium range selection with real-time hover previews
+[✦] Full Details Modal ...................... Glassmorphic view for managing long-form notes & events
+[✦] Premium Typography ...................... Striking hierarchy using bold weights & smart opacities
+[✓] Interactive Wall-Calendar Grid .......... Smooth day-range selections and navigation
+[✓] Search & Filtering Engine ............... Real-time text-match highlighting and priority filters
+[✓] Date Range Filter ....................... Glassmorphic date picker with automatic validation
+[✓] Local Storage Persistence ............... All notes and settings survive browser refreshes
+[✓] Mobile-First Responsive Design .......... Flawless scaling from mobile to ultra-wide screens
+[✓]   └── Theme Engine ...................... Real-time accent color switching & ambient toggles
 ```
 
 ---
@@ -65,11 +72,11 @@ mode    = strict
 
 [styling]
 primary   = Tailwind CSS 3.4
-secondary = Vanilla CSS (custom animations & overrides)
+design    = Glassmorphism & Custom Animations
 
 [state]
-pattern = Custom React Hooks
-modules = useCalendar, useEventFilters, useNotes, useReminders, useDateRange, useNotifications
+pattern = Custom React Hooks (12+ functional modules)
+modules = useAnalytics, useSeasonalEffects, useCalendar, useEventFilters, useNotes, useDateRange
 ```
 
 ---
@@ -78,29 +85,56 @@ modules = useCalendar, useEventFilters, useNotes, useReminders, useDateRange, us
 
 ```
 src/
-├── app/                      # Next.js 14 App Router
-│   ├── globals.css           # Global styles & Tailwind imports
-│   ├── layout.tsx            # Root layout with Theme Providers
-│   └── page.tsx              # Main application entry point
+├── app/                      # Main Next.js App Router folders
+│   ├── favicon.ico           # Application icon
+│   ├── globals.css           # Global styles and Tailwind layers
+│   ├── layout.tsx            # Root layout for page structure
+│   └── page.tsx              # Main homepage entry point
 │
 ├── components/               # Modular UI Components
-│   ├── Calendar/             # Calendar grid, day cells, event indicators
-│   │   └── CalendarGrid.tsx
-│   ├── Notes/                # Note management UI
+│   ├── Analytics/            # Dashboard components
+│   │   ├── AnalyticsModal.tsx
+│   │   └── MiniAnalyticsDashboard.tsx
+│   ├── Calendar/             # Calendar specific logic
+│   │   ├── Calendar.tsx
+│   │   ├── CalendarGrid.tsx
+│   │   ├── CalendarHeader.tsx
+│   │   ├── DailySummaryModal.tsx
+│   │   └── DayCell.tsx
+│   ├── Common/               # Reusable UI elements
+│   │   └── EmptyState.tsx
+│   ├── Notes/                # Note-taking UI
 │   │   ├── FilterDatePicker.tsx
+│   │   ├── FilterPanel.tsx
+│   │   ├── NoteDetailsModal.tsx
+│   │   ├── NotesPanel.tsx
 │   │   └── SearchMatchHighlight.tsx
-│   └── Theme/                # Theme toggles & context providers
+│   └── Theme/                # Visual FX and Style settings
+│       ├── SeasonalEffects.tsx
+│       ├── ThemeCustomizer.tsx
+│       └── ThemeToggle.tsx
 │
-├── hooks/                    # ⚡ Core Business Logic
-│   ├── useCalendar.ts        # Grid generation & navigation
-│   ├── useDateRange.ts       # Range selection state machine
-│   ├── useEventFilters.ts    # Search + advanced multi-filter pipeline
-│   ├── useNotes.ts           # CRUD operations + localStorage sync
-│   ├── useNotifications.ts   # Toast notification system
-│   └── useReminders.ts       # Reminder scheduling & state
+├── contexts/                 # Global state providers
+│   └── ThemeContext.tsx      # Theme and Seasonal state
 │
-└── types/                    # TypeScript Definitions
-    └── index.ts              # Shared application interfaces
+├── hooks/                    # ⚡ Core Logic Hooks
+│   ├── useAnalytics.ts       # Dashboard calculations
+│   ├── useCalendar.ts        # Grid generation
+│   ├── useDateRange.ts       # Drag selection
+│   ├── useDateUtils.ts       # Formatting helpers
+│   ├── useEventDragDrop.ts   # Mouse drag moves
+│   ├── useEventFilters.ts    # Search logic
+│   ├── useNotes.ts           # CRUD and Storage
+│   ├── useNotifications.ts   # Toasts and alerts
+│   ├── useReminders.ts       # Scheduled alerts
+│   └── useSeasonalEffects.ts # Dynamic environment
+│
+├── types/                    # TypeScript interfaces
+│   └── index.ts              # Data models (Note, CalendarDay, etc.)
+│
+└── utils/                    # Helper functions
+    ├── dateUtils.ts          # Core math for dates
+    └── holidays.ts           # Holiday list database
 ```
 
 ---
@@ -120,17 +154,14 @@ $ npm --version    # v9.0.0 or above recommended
 # Clone the repository
 $ git clone https://github.com/Ravi-Dahiya-00/interactive-calendar.git
 
-# Navigate to the project
+# Navigate to project
 $ cd interactive-calendar
 
 # Install dependencies
 $ npm install
 
-# Fire up the dev server
+# Run the project
 $ npm run dev
-
-# Application is now live at:
-# → http://localhost:3000
 ```
 
 ---
@@ -142,30 +173,30 @@ $ npm run dev
 │                    ARCHITECTURE OVERVIEW                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│   ┌─────────┐    ┌──────────────┐    ┌───────────────────┐     │
-│   │  PAGE    │───▶│  COMPONENTS  │───▶│   CUSTOM HOOKS    │     │
-│   │ (entry)  │    │  (Calendar,  │    │  (useCalendar,    │     │
-│   │          │    │   Notes,     │    │   useNotes,       │     │
-│   │          │    │   Theme)     │    │   useFilters...)   │     │
-│   └─────────┘    └──────────────┘    └───────┬───────────┘     │
-│                                               │                 │
-│                                      ┌────────▼────────┐       │
-│                                      │   TYPES / API   │       │
-│                                      │  (index.ts)     │       │
-│                                      └────────┬────────┘       │
-│                                               │                 │
-│                                      ┌────────▼────────┐       │
-│                                      │  LOCAL STORAGE  │       │
-│                                      │  (persistence)  │       │
-│                                      └─────────────────┘       │
+│   ┌─────────┐    ┌──────────────┐    ┌───────────────────┐      │
+│   │  PAGE    │───▶│  COMPONENTS  │───▶│   CUSTOM HOOKS    │      │
+│   │ (entry)  │    │ (Dash, Grid, │    │  (Analytics,      │      │
+│   │          │    │  QuickNote)  │    │   Seasonal,       │      │
+│   │          │    └──────────────┘    │   DateRange)      │      │
+│   └─────────┘                         └───────┬───────────┘      │
+│                                               │                  │
+│                                      ┌────────▼────────┐        │
+│                                      │   TYPES / UTILS │        │
+│                                      │  Shared Models  │        │
+│                                      └────────┬────────┘        │
+│                                               │                  │
+│                                      ┌────────▼────────┐        │
+│                                      │  LOCAL STORAGE  │        │
+│                                      │ (Persistence)   │        │
+│                                      └─────────────────┘        │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │  PRINCIPLES:                                                    │
-│  [✓] Separation of Concerns — Logic decoupled from UI          │
-│  [✓] Type Safety — Strict TS interfaces across all layers      │
-│  [✓] Performance — useMemo/useCallback to prevent re-renders   │
-│  [✓] Modularity — Reusable, composable component design        │
-│  [✓] Resilient Logic — Boundary validation in filter pipeline  │
+│  [✓] Separation of Concerns — Logic decoupled from UI           │
+│  [✓] Type Safety — Strict TS interfaces for data integrity      │
+│  [✓] Performance — useMemo/useCallback to prevent re-renders    │
+│  [✓] Modularity — Reusable, composable component design         │
+│  [✓] Aesthetics — Premium typography, shadows, and anims        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
