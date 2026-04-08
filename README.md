@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📅 Interactive Calendar Application
 
-## Getting Started
+A highly responsive, feature-rich interactive calendar application engineered with **Next.js 14**, **React 18**, and **TypeScript**. This project demonstrates an advanced understanding of modern web development, intricate component state management, and elegant UI/UX design.
 
-First, run the development server:
+It features a fully functional event management system complete with multi-faceted filtering, a beautifully crafted calendar grid, and robust client-side storage solutions, built strictly focusing on best practices and performance optimizations.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Key Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Interactive Wall-Calendar Grid:** A dynamic, perfectly scalable calendar supporting seamless day-range selections.
+- **Advanced Notes & Event Management:** Add, edit, and organize notes/events. Includes features for categorizing by type and setting **Priority Levels** (Low, Medium, High).
+- **Robust Search & Filtering Engine:**
+  - Real-time inline search bar with text-match highlighting.
+  - Complex filtering via sleek, absolute-positioned glassmorphic dropdowns (Filter by Date Range, Category, and Priority).
+  - Built-in validation ensuring logical date range integrity (Start Date chronologically precedes End Date).
+- **Local Storage Persistence:** A seamless user experience where all notes, calendar states, and configurations are saved locally across browser sessions.
+- **Premium UI/UX Design:** A highly polished "wow-factor" visual aesthetic featuring sleek modern typography, soft glassmorphism effects, well-curated color-coded hover states, and smooth micro-animations.
+- **Mobile-First Responsiveness:** Flawless transition from mobile devices up to large unscaled desktop displays.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠 Technology Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Framework:** [Next.js 14](https://nextjs.org/) (Leveraging the App Router)
+- **Library:** [React 18](https://react.dev/)
+- **Language:** TypeScript (Strict typing for interface reliability)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) & Vanilla CSS for specific UI overrides and dynamic dynamic animations.
+- **State Management & Logic:** Complex Custom React Hooks (`useCalendar`, `useEventFilters`, `useNotes`, `useReminders`) ensuring high decoupling and clean architecture.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Getting Started
 
-## Deploy on Vercel
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/en/) installed (version 18 or above is recommended).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Local Setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Ravi-Dahiya-00/interactive-calendar.git
+   cd interactive-calendar
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   # or yarn install / pnpm install
+   ```
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   # or yarn dev / pnpm dev
+   ```
+
+4. **Experience the app:**
+   Open [http://localhost:3000](http://localhost:3000) in your web browser.
+
+---
+
+## 🏗️ Architecture & Engineering Best Practices
+
+This project was built to illustrate production-quality engineering standards:
+
+- **Modularity:** The UI is systematically broken down into distinct, reusable chunks (`Calendar`, `Notes`, `Theme`). 
+- **Separation of Concerns:** Business logic is entirely extracted away from UI rendering. We utilize custom React hooks (e.g., `src/hooks/useEventFilters.ts`) to manage complex, interrelated states and filters.
+- **Performance Optimizations:** Intentional use of React's `useMemo` and `useCallback` to prevent unnecessary component re-renders—especially critical within the complex grid rendering cycle.
+- **Type Safety:** Extensive TS typing and interfaces drastically reduce runtime errors and enhance codebase maintainability.
+- **Resilient Logic:** Deeply nested UI components are shielded gracefully via strict boundary and prop validation (e.g., preventing invalid date ranges natively in the filter pipeline).
+
+---
+
+## 💬 Contact & Links
+
+Feel free to explore the codebase and reach out for any questions, feedback, or collaborations! 
+
+*Designed and engineered with passion.*
