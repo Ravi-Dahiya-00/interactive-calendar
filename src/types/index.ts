@@ -21,6 +21,7 @@ export type NoteCategory = 'work' | 'personal' | 'study' | 'other';
 
 export interface Note {
   id: string;
+  title?: string;
   content: string;
   dateRange: SerializedDateRange | null;
   createdAt: string;

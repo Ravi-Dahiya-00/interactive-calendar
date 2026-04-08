@@ -7,12 +7,13 @@ import { EventFiltersController } from '@/hooks/useEventFilters';
 import { FilterPanel } from './FilterPanel';
 import { SearchMatchHighlight } from './SearchMatchHighlight';
 import { EmptyState } from '@/components/Common/EmptyState';
+import { NoteDetailsModal } from './NoteDetailsModal';
 
 interface NotesPanelProps {
   notes: Note[];
   dateRange: DateRange;
   isSelectingEnd: boolean;
-  onAddNote: (content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low', eventTime?: string, eventEndTime?: string, reminder?: number, category?: NoteCategory) => void;
+  onAddNote: (title: string | undefined, content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low', eventTime?: string, eventEndTime?: string, reminder?: number, category?: NoteCategory) => void;
   onDeleteNote: (id: string) => void;
   onClearRange: () => void;
   onGoToToday: () => void;
@@ -36,7 +37,10 @@ export function NotesPanel({
   panelId,
 }: NotesPanelProps) {
   const [newNote, setNewNote] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activeNote, setActiveNote] = useState<Note | null>(null);
   
   // Priority feature states
   const [priority, setPriority] = useState<'high' | 'medium' | 'low'>('medium');
@@ -111,14 +115,16 @@ export function NotesPanel({
   const hasRange = dateRange.start !== null;
 
   const handleAddNote = useCallback(() => {
-    if (!newNote.trim()) return;
-    onAddNote(newNote, hasRange ? dateRange : null, priority, eventTime || undefined, eventEndTime || undefined, reminder, newCategory);
+    if (!newNote.trim() && !newTitle.trim()) return;
+    onAddNote(newTitle.trim() ? newTitle : undefined, newNote, hasRange ? dateRange : null, priority, eventTime || undefined, eventEndTime || undefined, reminder, newCategory);
     setNewNote('');
+    setNewTitle('');
+    setIsExpanded(false);
     setPriority('medium');
     setEventTime('');
     setEventEndTime('');
     setReminder(undefined);
-  }, [newNote, hasRange, dateRange, priority, eventTime, eventEndTime, reminder, newCategory, onAddNote]);
+  }, [newNote, newTitle, isExpanded, hasRange, dateRange, priority, eventTime, eventEndTime, reminder, newCategory, onAddNote]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -278,7 +284,7 @@ export function NotesPanel({
                 </span>
               </div>
               <p className="text-[11px] text-cal-primary/80">
-                Tip: navigate month/year and click another date to extend this range.
+                Drag across dates on the calendar to select a custom range.
               </p>
             </div>
             <button
@@ -325,24 +331,47 @@ export function NotesPanel({
         )}
       </div>
 
-      {/* New Note Input */}
-      <div className="p-4 sm:p-5 border-b border-cal-border">
-        <textarea
-          ref={noteInputRef}
-          value={newNote}
-          onChange={(e) => setNewNote(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            hasRange && !isSelectingEnd
-              ? `Add a note for ${rangeText}...`
-              : 'Write a general note...'
-          }
-          className="w-full px-3 py-2.5 text-sm rounded-xl border border-cal-border bg-cal-bg text-cal-text focus:border-cal-primary focus:ring-2 focus:ring-cal-primary/20 outline-none resize-none transition-all duration-200 placeholder:text-cal-muted"
-          rows={3}
-          id={`${panelId}-note-input`}
-        />
-        
-        {/* Time and Reminder Selection */}
+      {/* Unified New Note Input Card */}
+      <div className="p-4 sm:p-5 border-b border-cal-border bg-cal-card">
+        <div 
+          className={`flex flex-col transition-all duration-300 rounded-xl border bg-cal-bg overflow-hidden ${
+            isExpanded ? 'border-cal-primary/50 shadow-lg ring-4 ring-cal-primary/10' : 'border-cal-border shadow-sm hover:border-cal-primary/30'
+          }`}
+          onClick={() => !isExpanded && setIsExpanded(true)}
+        >
+          {isExpanded && (
+            <input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Title"
+              className="w-full px-4 pt-3 pb-1 text-base font-bold bg-transparent text-cal-text placeholder:text-cal-muted outline-none font-display"
+              autoFocus
+            />
+          )}
+
+          <textarea
+            ref={noteInputRef}
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            onFocus={() => setIsExpanded(true)}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              hasRange && !isSelectingEnd
+                ? `Take a note for ${rangeText}...`
+                : 'Take a note...'
+            }
+            className={`w-full px-4 text-sm bg-transparent text-cal-text outline-none resize-none placeholder:text-cal-muted transition-all duration-300 ${
+              isExpanded ? 'py-2 min-h-[80px]' : 'py-3 min-h-[44px]'
+            }`}
+            rows={isExpanded ? 3 : 1}
+            id={`${panelId}-note-input`}
+          />
+          
+          {/* Collapsible Action Area */}
+          {isExpanded && (
+            <div className="px-4 pb-3 pt-1 border-t border-cal-border/50 bg-cal-bg/50 flex flex-col gap-3 animate-fade-in">
+              {/* Time and Reminder Selection */}
         {hasRange && !isSelectingEnd && (
           <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
             <div className="relative" ref={timeMenuRef}>
@@ -516,27 +545,29 @@ export function NotesPanel({
             </div>
           </div>
 
-          <button
-            onClick={handleAddNote}
-            disabled={!newNote.trim()}
-            className="w-full sm:w-auto justify-center px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-cal-primary text-white hover:bg-cal-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
-            id={`${panelId}-add-note-btn`}
-          >
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Add
-          </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => {
+                      setIsExpanded(false);
+                      setNewNote('');
+                      setNewTitle('');
+                    }}
+                    className="flex-1 sm:flex-none justify-center px-4 py-2 min-h-[36px] text-sm font-medium rounded-lg text-cal-muted hover:bg-cal-border transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddNote}
+                    disabled={!newNote.trim() && !newTitle.trim()}
+                    className="flex-1 sm:flex-none justify-center px-5 py-2 min-h-[36px] text-sm font-medium rounded-lg bg-cal-primary text-white hover:bg-cal-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+                    id={`${panelId}-add-note-btn`}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -586,8 +617,16 @@ export function NotesPanel({
                   className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-md ${indicatorColor}`}
                 />
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-cal-text whitespace-pre-wrap break-words">
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer group"
+                    onClick={() => setActiveNote(note)}
+                  >
+                    {note.title && (
+                      <h4 className="text-[15px] font-bold text-cal-text group-hover:text-cal-primary transition-colors truncate mb-1">
+                        {note.title}
+                      </h4>
+                    )}
+                    <p className={`text-sm text-cal-text whitespace-pre-wrap break-words ${note.title ? 'text-cal-muted line-clamp-2' : 'group-hover:text-cal-primary transition-colors'}`}>
                       <SearchMatchHighlight text={note.content} query={debouncedSearch} />
                     </p>
                     <div className="flex items-center flex-wrap gap-2 mt-2.5">
@@ -648,6 +687,14 @@ export function NotesPanel({
           })
         )}
       </div>
+
+      {/* Full Note Details Modal */}
+      {activeNote && (
+        <NoteDetailsModal 
+          note={activeNote} 
+          onClose={() => setActiveNote(null)} 
+        />
+      )}
     </div>
   );
 }

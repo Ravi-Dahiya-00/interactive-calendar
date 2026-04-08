@@ -77,18 +77,8 @@ export function formatDateRange(start: Date | null, end: Date | null): string {
   
   const startYear = start.getFullYear();
   const endYear = end.getFullYear();
-  const startMonth = start.getMonth();
-  const endMonth = end.getMonth();
 
-  if (startYear !== endYear) {
-    return `${formatDateShort(start)}, ${startYear} — ${formatDateShort(end)}, ${endYear}`;
-  }
-
-  if (startMonth !== endMonth) {
-    return `${formatDateShort(start)} — ${formatDateShort(end)}, ${endYear}`;
-  }
-
-  return `${start.getDate()} — ${formatDateShort(end)}, ${endYear}`;
+  return `${formatDateShort(start)}, ${startYear} — ${formatDateShort(end)}, ${endYear}`;
 }
 
 export function dateToISOString(date: Date): string {

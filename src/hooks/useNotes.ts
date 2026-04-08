@@ -46,6 +46,7 @@ export function useNotes() {
   }, [notes, isLoaded]);
 
   const addNote = useCallback((
+    title: string | undefined,
     content: string,
     dateRange: DateRange | null,
     priority: 'high' | 'medium' | 'low' = 'medium',
@@ -56,6 +57,7 @@ export function useNotes() {
   ) => {
     const newNote: Note = {
       id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title,
       content: content.trim(),
       dateRange: serializeDateRange(dateRange),
       createdAt: new Date().toISOString(),
