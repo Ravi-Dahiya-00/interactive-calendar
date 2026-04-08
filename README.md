@@ -1,79 +1,207 @@
-# 📅 Interactive Calendar Application
+```
+ ██╗███╗   ██╗████████╗███████╗██████╗  █████╗  ██████╗████████╗██╗██╗   ██╗███████╗
+ ██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██╔════╝╚══██╔══╝██║██║   ██║██╔════╝
+ ██║██╔██╗ ██║   ██║   █████╗  ██████╔╝███████║██║        ██║   ██║██║   ██║█████╗  
+ ██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗██╔══██║██║        ██║   ██║╚██╗ ██╔╝██╔══╝  
+ ██║██║ ╚████║   ██║   ███████╗██║  ██║██║  ██║╚██████╗   ██║   ██║ ╚████╔╝ ███████╗
+ ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝   ╚═╝   ╚═╝  ╚═══╝  ╚══════╝
+  ██████╗ █████╗ ██╗     ███████╗███╗   ██╗██████╗  █████╗ ██████╗                    
+ ██╔════╝██╔══██╗██║     ██╔════╝████╗  ██║██╔══██╗██╔══██╗██╔══██╗                   
+ ██║     ███████║██║     █████╗  ██╔██╗ ██║██║  ██║███████║██████╔╝                   
+ ██║     ██╔══██║██║     ██╔══╝  ██║╚██╗██║██║  ██║██╔══██║██╔══██╗                   
+ ╚██████╗██║  ██║███████╗███████╗██║ ╚████║██████╔╝██║  ██║██║  ██║                   
+  ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝                   
+```
+
+<div align="center">
+
+`> STATUS: DEPLOYED` &nbsp; `> BUILD: PASSING` &nbsp; `> VERSION: 1.0.0`
+
+**[ [🔗 LIVE_DEMO](https://interactive-calendar-kappa.vercel.app/) ]** &nbsp;·&nbsp; **[ [💻 SOURCE](https://github.com/Ravi-Dahiya-00/interactive-calendar) ]**
+
+</div>
+
+---
+
+## `> whoami`
 
 A highly responsive, feature-rich interactive calendar application engineered with **Next.js 14**, **React 18**, and **TypeScript**. This project demonstrates an advanced understanding of modern web development, intricate component state management, and elegant UI/UX design.
 
-It features a fully functional event management system complete with multi-faceted filtering, a beautifully crafted calendar grid, and robust client-side storage solutions, built strictly focusing on best practices and performance optimizations.
+It features a fully functional event management system complete with multi-faceted filtering, a beautifully crafted calendar grid, and robust client-side storage solutions — built strictly focusing on best practices and performance optimizations.
 
 ---
 
-## ✨ Key Features
+## `> cat features.log`
 
-- **Interactive Wall-Calendar Grid:** A dynamic, perfectly scalable calendar supporting seamless day-range selections.
-- **Advanced Notes & Event Management:** Add, edit, and organize notes/events. Includes features for categorizing by type and setting **Priority Levels** (Low, Medium, High).
-- **Robust Search & Filtering Engine:**
-  - Real-time inline search bar with text-match highlighting.
-  - Complex filtering via sleek, absolute-positioned glassmorphic dropdowns (Filter by Date Range, Category, and Priority).
-  - Built-in validation ensuring logical date range integrity (Start Date chronologically precedes End Date).
-- **Local Storage Persistence:** A seamless user experience where all notes, calendar states, and configurations are saved locally across browser sessions.
-- **Premium UI/UX Design:** A highly polished "wow-factor" visual aesthetic featuring sleek modern typography, soft glassmorphism effects, well-curated color-coded hover states, and smooth micro-animations.
-- **Mobile-First Responsiveness:** Flawless transition from mobile devices up to large unscaled desktop displays.
-
----
-
-## 🛠 Technology Stack
-
-- **Framework:** [Next.js 14](https://nextjs.org/) (Leveraging the App Router)
-- **Library:** [React 18](https://react.dev/)
-- **Language:** TypeScript (Strict typing for interface reliability)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/) & Vanilla CSS for specific UI overrides and dynamic dynamic animations.
-- **State Management & Logic:** Complex Custom React Hooks (`useCalendar`, `useEventFilters`, `useNotes`, `useReminders`) ensuring high decoupling and clean architecture.
+```
+[✓] Interactive Wall-Calendar Grid ............ Dynamic, scalable calendar with seamless day-range selections
+[✓] Notes & Event Management .................. Full CRUD with category classification & priority levels (Low/Med/High)
+[✓] Search & Filtering Engine ................. Real-time inline search with text-match highlighting
+[✓]   ├── Date Range Filter ................... Glassmorphic dropdown with start/end date validation
+[✓]   ├── Category Filter ..................... Filter events by custom categories
+[✓]   └── Priority Filter ..................... Filter by Low, Medium, High priority
+[✓] Local Storage Persistence ................. All notes, calendar states & configs survive browser sessions
+[✓] Premium UI/UX ............................ Glassmorphism, micro-animations, color-coded hover states
+[✓] Mobile-First Responsive Design ........... Flawless scaling from mobile to ultra-wide displays
+```
 
 ---
 
-## 🚀 Getting Started
+## `> cat tech_stack.conf`
+
+```ini
+[framework]
+name    = Next.js
+version = 14.2.15
+router  = App Router
+
+[library]
+name    = React
+version = 18.2.0
+
+[language]
+name    = TypeScript
+mode    = strict
+
+[styling]
+primary   = Tailwind CSS 3.4
+secondary = Vanilla CSS (custom animations & overrides)
+
+[state]
+pattern = Custom React Hooks
+modules = useCalendar, useEventFilters, useNotes, useReminders, useDateRange, useNotifications
+```
+
+---
+
+## `> tree src/`
+
+```
+src/
+├── app/                      # Next.js 14 App Router
+│   ├── globals.css           # Global styles & Tailwind imports
+│   ├── layout.tsx            # Root layout with Theme Providers
+│   └── page.tsx              # Main application entry point
+│
+├── components/               # Modular UI Components
+│   ├── Calendar/             # Calendar grid, day cells, event indicators
+│   │   └── CalendarGrid.tsx
+│   ├── Notes/                # Note management UI
+│   │   ├── FilterDatePicker.tsx
+│   │   └── SearchMatchHighlight.tsx
+│   └── Theme/                # Theme toggles & context providers
+│
+├── hooks/                    # ⚡ Core Business Logic
+│   ├── useCalendar.ts        # Grid generation & navigation
+│   ├── useDateRange.ts       # Range selection state machine
+│   ├── useEventFilters.ts    # Search + advanced multi-filter pipeline
+│   ├── useNotes.ts           # CRUD operations + localStorage sync
+│   ├── useNotifications.ts   # Toast notification system
+│   └── useReminders.ts       # Reminder scheduling & state
+│
+└── types/                    # TypeScript Definitions
+    └── index.ts              # Shared application interfaces
+```
+
+---
+
+## `> ./install.sh`
 
 ### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/en/) installed (version 18 or above is recommended).
 
-### Local Setup
+```bash
+$ node --version   # v18.0.0 or above required
+$ npm --version    # v9.0.0 or above recommended
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Ravi-Dahiya-00/interactive-calendar.git
-   cd interactive-calendar
-   ```
+### Quick Start
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   # or yarn install / pnpm install
-   ```
+```bash
+# Clone the repository
+$ git clone https://github.com/Ravi-Dahiya-00/interactive-calendar.git
 
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   # or yarn dev / pnpm dev
-   ```
+# Navigate to the project
+$ cd interactive-calendar
 
-4. **Experience the app:**
-   Open [http://localhost:3000](http://localhost:3000) in your web browser.
+# Install dependencies
+$ npm install
 
----
+# Fire up the dev server
+$ npm run dev
 
-## 🏗️ Architecture & Engineering Best Practices
-
-This project was built to illustrate production-quality engineering standards:
-
-- **Modularity:** The UI is systematically broken down into distinct, reusable chunks (`Calendar`, `Notes`, `Theme`). 
-- **Separation of Concerns:** Business logic is entirely extracted away from UI rendering. We utilize custom React hooks (e.g., `src/hooks/useEventFilters.ts`) to manage complex, interrelated states and filters.
-- **Performance Optimizations:** Intentional use of React's `useMemo` and `useCallback` to prevent unnecessary component re-renders—especially critical within the complex grid rendering cycle.
-- **Type Safety:** Extensive TS typing and interfaces drastically reduce runtime errors and enhance codebase maintainability.
-- **Resilient Logic:** Deeply nested UI components are shielded gracefully via strict boundary and prop validation (e.g., preventing invalid date ranges natively in the filter pipeline).
+# Application is now live at:
+# → http://localhost:3000
+```
 
 ---
 
-## 💬 Contact & Links
+## `> cat architecture.md`
 
-Feel free to explore the codebase and reach out for any questions, feedback, or collaborations! 
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ARCHITECTURE OVERVIEW                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌─────────┐    ┌──────────────┐    ┌───────────────────┐     │
+│   │  PAGE    │───▶│  COMPONENTS  │───▶│   CUSTOM HOOKS    │     │
+│   │ (entry)  │    │  (Calendar,  │    │  (useCalendar,    │     │
+│   │          │    │   Notes,     │    │   useNotes,       │     │
+│   │          │    │   Theme)     │    │   useFilters...)   │     │
+│   └─────────┘    └──────────────┘    └───────┬───────────┘     │
+│                                               │                 │
+│                                      ┌────────▼────────┐       │
+│                                      │   TYPES / API   │       │
+│                                      │  (index.ts)     │       │
+│                                      └────────┬────────┘       │
+│                                               │                 │
+│                                      ┌────────▼────────┐       │
+│                                      │  LOCAL STORAGE  │       │
+│                                      │  (persistence)  │       │
+│                                      └─────────────────┘       │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  PRINCIPLES:                                                    │
+│  [✓] Separation of Concerns — Logic decoupled from UI          │
+│  [✓] Type Safety — Strict TS interfaces across all layers      │
+│  [✓] Performance — useMemo/useCallback to prevent re-renders   │
+│  [✓] Modularity — Reusable, composable component design        │
+│  [✓] Resilient Logic — Boundary validation in filter pipeline  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-*Designed and engineered with passion.*
+---
+
+## `> cat contact.sh`
+
+```bash
+#!/bin/bash
+# ┌──────────────────────────────────────────┐
+# │          CONNECT WITH THE DEV            │
+# └──────────────────────────────────────────┘
+
+GITHUB="https://github.com/Ravi-Dahiya-00"
+LINKEDIN="https://www.linkedin.com/in/raviyadav23/"
+
+echo "📬 Reach out for questions, feedback, or collaborations!"
+echo ""
+echo "  ▸ GitHub   → $GITHUB"
+echo "  ▸ LinkedIn → $LINKEDIN"
+```
+
+<div align="center">
+
+**[ [<img src="https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white" alt="GitHub" />](https://github.com/Ravi-Dahiya-00) ]** &nbsp; **[ [<img src="https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin&logoColor=white" alt="LinkedIn" />](https://www.linkedin.com/in/raviyadav23/) ]**
+
+</div>
+
+---
+
+<div align="center">
+
+```
+ ╔══════════════════════════════════════════╗
+ ║  Designed & Engineered with passion 🚀  ║
+ ╚══════════════════════════════════════════╝
+```
+
+</div>
