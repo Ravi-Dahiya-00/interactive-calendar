@@ -6,6 +6,7 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -14,17 +15,17 @@ const config: Config = {
       },
       colors: {
         cal: {
-          primary: '#0d9488',
-          'primary-dark': '#0f766e',
-          'primary-light': '#ccfbf1',
-          'primary-50': '#f0fdfa',
-          accent: '#14b8a6',
-          bg: '#f1f0eb',
-          card: '#ffffff',
-          text: '#1e293b',
-          muted: '#94a3b8',
-          border: '#e2e8f0',
-          holiday: '#ef4444',
+          primary: 'var(--cal-primary)',
+          'primary-dark': 'var(--cal-primary-dark)',
+          'primary-light': 'var(--cal-primary-light)',
+          'primary-50': 'var(--cal-primary-50)',
+          accent: 'var(--cal-accent)',
+          bg: 'var(--cal-bg)',
+          card: 'var(--cal-card)',
+          text: 'var(--cal-text)',
+          muted: 'var(--cal-muted)',
+          border: 'var(--cal-border)',
+          holiday: 'var(--cal-holiday)',
         },
       },
       animation: {
@@ -64,6 +65,9 @@ const config: Config = {
     },
   },
   plugins: [],
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
 };
 
 export default config;

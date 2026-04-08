@@ -17,6 +17,8 @@ export interface SerializedDateRange {
   end: string | null;
 }
 
+export type NoteCategory = 'work' | 'personal' | 'study' | 'other';
+
 export interface Note {
   id: string;
   content: string;
@@ -24,6 +26,11 @@ export interface Note {
   createdAt: string;
   color: string;
   priority?: 'high' | 'medium' | 'low';
+  eventTime?: string; // Format "HH:mm"
+  eventEndTime?: string; // Format "HH:mm"
+  reminder?: number; // Minutes before event
+  notified?: boolean;
+  category?: NoteCategory;
 }
 
 export type NavigationDirection = 'prev' | 'next';

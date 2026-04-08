@@ -6,23 +6,89 @@
 
 /* ── Base Resets ── */
 @layer base {
+  :root {
+    --cal-bg: #f1f0eb;
+    --cal-card: #ffffff;
+    --cal-surface: #ffffff;
+    --cal-text: #1e293b;
+    --cal-muted: #94a3b8;
+    --cal-border: #e2e8f0;
+    --cal-holiday: #ef4444;
+    
+    /* Emerald (Default) */
+    --cal-primary: #0d9488;
+    --cal-primary-dark: #0f766e;
+    --cal-primary-light: #ccfbf1;
+    --cal-primary-50: #f0fdfa;
+    --cal-accent: #14b8a6;
+  }
+
+  .dark {
+    --cal-bg: #0f172a;
+    --cal-card: #1e293b;
+    --cal-surface: #1e293b;
+    --cal-text: #f8fafc;
+    --cal-muted: #94a3b8;
+    --cal-border: #334155;
+    
+    --cal-primary-50: rgba(13, 148, 136, 0.15);
+    --cal-primary-light: rgba(13, 148, 136, 0.25);
+  }
+
+  :root[data-theme="blue"] {
+    --cal-primary: #2563eb;
+    --cal-primary-dark: #1d4ed8;
+    --cal-primary-light: #dbeafe;
+    --cal-primary-50: #eff6ff;
+    --cal-accent: #3b82f6;
+  }
+  .dark[data-theme="blue"] {
+    --cal-primary-50: rgba(37, 99, 235, 0.15);
+    --cal-primary-light: rgba(37, 99, 235, 0.25);
+  }
+
+  :root[data-theme="violet"] {
+    --cal-primary: #7c3aed;
+    --cal-primary-dark: #6d28d9;
+    --cal-primary-light: #ede9fe;
+    --cal-primary-50: #f5f3ff;
+    --cal-accent: #8b5cf6;
+  }
+  .dark[data-theme="violet"] {
+    --cal-primary-50: rgba(124, 58, 237, 0.15);
+    --cal-primary-light: rgba(124, 58, 237, 0.25);
+  }
+
+  :root[data-theme="rose"] {
+    --cal-primary: #e11d48;
+    --cal-primary-dark: #be123c;
+    --cal-primary-light: #ffe4e6;
+    --cal-primary-50: #fff1f2;
+    --cal-accent: #f43f5e;
+  }
+  .dark[data-theme="rose"] {
+    --cal-primary-50: rgba(225, 29, 72, 0.15);
+    --cal-primary-light: rgba(225, 29, 72, 0.25);
+  }
+
   * {
     box-sizing: border-box;
   }
 
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: #f1f0eb;
-    color: #1e293b;
+    background-color: var(--cal-bg);
+    color: var(--cal-text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
 /* ── Calendar Card ── */
 @layer components {
   .calendar-card {
-    @apply bg-white rounded-2xl overflow-hidden;
+    @apply bg-cal-card rounded-2xl overflow-hidden transition-colors;
     box-shadow:
       0 4px 6px -1px rgba(0, 0, 0, 0.05),
       0 25px 50px -12px rgba(0, 0, 0, 0.12);
@@ -32,7 +98,7 @@
     content: '';
     display: block;
     height: 6px;
-    background: linear-gradient(90deg, #0d9488, #14b8a6, #2dd4bf);
+    background: linear-gradient(90deg, var(--cal-primary-dark), var(--cal-primary), var(--cal-accent));
   }
 
   /* ── Hero Image Section ── */
@@ -90,7 +156,13 @@
   .day-cell {
     @apply relative flex items-center justify-center cursor-pointer select-none;
     aspect-ratio: 1;
+    min-height: 44px;
+    min-width: 44px;
     transition: all 0.15s ease;
+  }
+
+  .day-cell:hover {
+    @apply z-50;
   }
 
   .day-cell:hover .day-number {
@@ -105,49 +177,25 @@
     transition: all 0.15s ease;
   }
 
-  @media (min-width: 640px) {
-    .day-number {
-      width: 40px;
-      height: 40px;
-    }
-  }
-
-  /* Day states */
-  .day-cell.other-month .day-number {
-    @apply text-gray-300;
-  }
-
-  .day-cell.today .day-number {
-    @apply border-2 border-cal-primary font-bold text-cal-primary;
-  }
-
-  .day-cell.range-start .day-number,
-  .day-cell.range-end .day-number {
-    @apply bg-cal-primary text-white font-semibold;
-    transform: scale(1.05);
-  }
-
-  .day-cell.range-start .day-number:hover,
-  .day-cell.range-end .day-number:hover {
-    @apply bg-cal-primary-dark;
-  }
-
   /* Range background band */
   .day-cell.in-range {
-    background-color: rgba(13, 148, 136, 0.1);
+    background-color: var(--cal-primary-50);
   }
 
   .day-cell.in-range .day-number {
     @apply text-cal-primary-dark font-medium;
   }
+  .dark .day-cell.in-range .day-number {
+    @apply text-cal-primary font-bold;
+  }
 
   .day-cell.range-start {
-    background: linear-gradient(to right, transparent 50%, rgba(13, 148, 136, 0.1) 50%);
+    background: linear-gradient(to right, transparent 50%, var(--cal-primary-50) 50%);
     border-radius: 9999px 0 0 9999px;
   }
 
   .day-cell.range-end {
-    background: linear-gradient(to left, transparent 50%, rgba(13, 148, 136, 0.1) 50%);
+    background: linear-gradient(to left, transparent 50%, var(--cal-primary-50) 50%);
     border-radius: 0 9999px 9999px 0;
   }
 
@@ -158,28 +206,29 @@
 
   /* Preview range (hover state while selecting) */
   .day-cell.in-preview {
-    background-color: rgba(13, 148, 136, 0.06);
+    background-color: var(--cal-primary-50);
+    opacity: 0.7;
   }
 
   .day-cell.preview-start {
-    background: linear-gradient(to right, transparent 50%, rgba(13, 148, 136, 0.06) 50%);
+    background: linear-gradient(to right, transparent 50%, var(--cal-primary-50) 50%);
   }
 
   .day-cell.preview-end {
-    background: linear-gradient(to left, transparent 50%, rgba(13, 148, 136, 0.06) 50%);
+    background: linear-gradient(to left, transparent 50%, var(--cal-primary-50) 50%);
   }
 
   .day-cell.preview-end .day-number {
-    @apply ring-2 ring-cal-primary/30;
+    box-shadow: 0 0 0 2px var(--cal-primary-50);
   }
 
   /* Holiday dot */
   .holiday-dot {
-    @apply absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-cal-holiday;
+    @apply absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-cal-holiday z-20;
   }
 
   .holiday-tooltip {
-    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none transition-opacity z-50;
+    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none transition-opacity;
   }
 
   .day-cell:hover .holiday-tooltip {
@@ -188,18 +237,19 @@
 
   /* ── Notes Panel ── */
   .notes-panel {
-    @apply bg-white rounded-2xl overflow-hidden;
+    @apply bg-cal-card rounded-2xl overflow-hidden;
     box-shadow:
       0 4px 6px -1px rgba(0, 0, 0, 0.05),
       0 25px 50px -12px rgba(0, 0, 0, 0.12);
   }
 
   .note-card {
-    @apply relative p-3 rounded-xl border border-gray-100 transition-all duration-200;
+    @apply relative p-3 rounded-xl border border-cal-border bg-cal-bg transition-all duration-200;
   }
 
   .note-card:hover {
-    @apply border-gray-200 shadow-sm;
+    border-color: var(--cal-primary-50);
+    @apply shadow-sm;
   }
 
   .note-color-bar {

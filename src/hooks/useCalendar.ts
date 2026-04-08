@@ -46,6 +46,16 @@ export function useCalendar() {
     setCurrentYear(targetYear);
   }, [currentMonth, currentYear]);
 
+  const jumpToDate = useCallback((month: number, year: number) => {
+    if (year > currentYear || (year === currentYear && month > currentMonth)) {
+      setDirection('next');
+    } else {
+      setDirection('prev');
+    }
+    setCurrentMonth(month);
+    setCurrentYear(year);
+  }, [currentMonth, currentYear]);
+
   const monthName = MONTH_NAMES[currentMonth];
 
   return {
@@ -56,5 +66,6 @@ export function useCalendar() {
     direction,
     navigateMonth,
     goToToday,
+    jumpToDate,
   };
 }

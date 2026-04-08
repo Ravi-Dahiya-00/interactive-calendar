@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Note, DateRange, SerializedDateRange } from '@/types';
+import { Note, DateRange, SerializedDateRange, NoteCategory } from '@/types';
 import { dateToISOString } from '@/utils/dateUtils';
 
 const STORAGE_KEY = 'interactive-calendar-notes';
@@ -45,7 +45,15 @@ export function useNotes() {
     }
   }, [notes, isLoaded]);
 
-  const addNote = useCallback((content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low' = 'medium') => {
+  const addNote = useCallback((
+    content: string,
+    dateRange: DateRange | null,
+    priority: 'high' | 'medium' | 'low' = 'medium',
+    eventTime?: string,
+    eventEndTime?: string,
+    reminder?: number,
+    category?: NoteCategory
+  ) => {
     const newNote: Note = {
       id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: content.trim(),
@@ -53,6 +61,11 @@ export function useNotes() {
       createdAt: new Date().toISOString(),
       color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
       priority,
+      eventTime,
+      eventEndTime,
+      reminder,
+      notified: false,
+      category,
     };
     setNotes(prev => [newNote, ...prev]);
   }, []);
@@ -69,7 +82,13 @@ export function useNotes() {
     );
   }, []);
 
-  return { notes, isLoaded, addNote, deleteNote, editNote };
+  const updateNote = useCallback((id: string, updates: Partial<Note>) => {
+    setNotes(prev =>
+      prev.map(note => (note.id === id ? { ...note, ...updates } : note))
+    );
+  }, []);
+
+  return { notes, isLoaded, addNote, deleteNote, editNote, updateNote };
 }
 
 export { NOTE_COLORS };

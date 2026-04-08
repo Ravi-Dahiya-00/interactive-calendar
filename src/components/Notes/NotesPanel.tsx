@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useCallback, KeyboardEvent, useMemo, useRef, useEffect } from 'react';
-import { Note, DateRange } from '@/types';
+import { Note, DateRange, NoteCategory } from '@/types';
 import { isoStringToDate, formatDateRange } from '@/utils/dateUtils';
+import { useEventFilters } from '@/hooks/useEventFilters';
+import { FilterPanel } from './FilterPanel';
+import { SearchMatchHighlight } from './SearchMatchHighlight';
 
 interface NotesPanelProps {
   notes: Note[];
   dateRange: DateRange;
   isSelectingEnd: boolean;
-  onAddNote: (content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low') => void;
+  onAddNote: (content: string, dateRange: DateRange | null, priority: 'high' | 'medium' | 'low', eventTime?: string, eventEndTime?: string, reminder?: number, category?: NoteCategory) => void;
   onDeleteNote: (id: string) => void;
   onClearRange: () => void;
 }
@@ -26,15 +29,67 @@ export function NotesPanel({
   
   // Priority feature states
   const [priority, setPriority] = useState<'high' | 'medium' | 'low'>('medium');
-  const [priorityFilters, setPriorityFilters] = useState<Set<string>>(new Set(['high', 'medium', 'low']));
-  const [sortAscending, setSortAscending] = useState(false); // false = High to Low
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const filterMenuRef = useRef<HTMLDivElement>(null);
+  const [newCategory, setNewCategory] = useState<NoteCategory>('work');
+  const [eventTime, setEventTime] = useState('');
+  const [reminder, setReminder] = useState<number | undefined>(undefined);
+  
+  // Use Event Filters Hook
+  const {
+    filters,
+    debouncedSearch,
+    filteredNotes,
+    updateSearchQuery,
+    updateDateRange,
+    toggleCategory,
+    togglePriority,
+    clearFilters,
+    hasActiveFilters
+  } = useEventFilters(notes);
+
+  const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
+  const timeMenuRef = useRef<HTMLDivElement>(null);
+
+  const [eventEndTime, setEventEndTime] = useState('');
+  const [isEndTimeMenuOpen, setIsEndTimeMenuOpen] = useState(false);
+  const endTimeMenuRef = useRef<HTMLDivElement>(null);
+
+  const [isReminderMenuOpen, setIsReminderMenuOpen] = useState(false);
+  const reminderMenuRef = useRef<HTMLDivElement>(null);
+
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
+
+  const reminderOptions = [
+    { label: 'No reminder', value: undefined },
+    { label: '5 min before', value: 5 },
+    { label: '15 min before', value: 15 },
+    { label: '30 min before', value: 30 },
+    { label: '1 hr before', value: 60 },
+  ];
+
+  const timeOptions = useMemo(() => {
+    const times = [];
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        times.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+      }
+    }
+    return times;
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
-        setIsFilterMenuOpen(false);
+      if (timeMenuRef.current && !timeMenuRef.current.contains(event.target as Node)) {
+        setIsTimeMenuOpen(false);
+      }
+      if (endTimeMenuRef.current && !endTimeMenuRef.current.contains(event.target as Node)) {
+        setIsEndTimeMenuOpen(false);
+      }
+      if (reminderMenuRef.current && !reminderMenuRef.current.contains(event.target as Node)) {
+        setIsReminderMenuOpen(false);
+      }
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target as Node)) {
+        setIsCategoryMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -46,10 +101,13 @@ export function NotesPanel({
 
   const handleAddNote = useCallback(() => {
     if (!newNote.trim()) return;
-    onAddNote(newNote, hasRange ? dateRange : null, priority);
+    onAddNote(newNote, hasRange ? dateRange : null, priority, eventTime || undefined, eventEndTime || undefined, reminder, newCategory);
     setNewNote('');
     setPriority('medium');
-  }, [newNote, hasRange, dateRange, priority, onAddNote]);
+    setEventTime('');
+    setEventEndTime('');
+    setReminder(undefined);
+  }, [newNote, hasRange, dateRange, priority, eventTime, eventEndTime, reminder, newCategory, onAddNote]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -101,29 +159,16 @@ export function NotesPanel({
     });
   };
 
+  // We sort filteredNotes by timestamp natively
   const filteredAndSortedNotes = useMemo(() => {
-    return [...notes]
-      .filter((note) => priorityFilters.has(note.priority || 'medium'))
-      .sort((a, b) => {
-        const pmap: Record<string, number> = { high: 3, medium: 2, low: 1 };
-        const pa = pmap[a.priority || 'medium'];
-        const pb = pmap[b.priority || 'medium'];
-        if (pa !== pb) {
-          return sortAscending ? pa - pb : pb - pa;
-        }
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-  }, [notes, priorityFilters, sortAscending]);
-
-  const toggleFilter = (p: string) => {
-    const newFilters = new Set(priorityFilters);
-    if (newFilters.has(p)) {
-      if (newFilters.size > 1) newFilters.delete(p);
-    } else {
-      newFilters.add(p);
-    }
-    setPriorityFilters(newFilters);
-  };
+    return [...filteredNotes].sort((a, b) => {
+      const pmap: Record<string, number> = { high: 3, medium: 2, low: 1 };
+      const pa = pmap[a.priority || 'medium'];
+      const pb = pmap[b.priority || 'medium'];
+      if (pa !== pb) return pb - pa;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [filteredNotes]);
 
   const priorityColors = {
     high: 'bg-red-500 border-red-500 text-white',
@@ -140,9 +185,9 @@ export function NotesPanel({
   return (
     <div className="notes-panel h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col gap-3">
+      <div className="p-4 sm:p-5 border-b border-cal-border flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-cal-text flex items-center gap-2">
             <svg
               className="w-5 h-5 text-cal-primary"
               fill="none"
@@ -157,55 +202,27 @@ export function NotesPanel({
               />
             </svg>
             Notes
-            {notes.length > 0 && (
+            {filteredNotes.length > 0 && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-cal-primary-50 text-cal-primary ml-1">
-                {notes.length}
+                {filteredNotes.length}
               </span>
             )}
           </h3>
-
-          {/* Filters and Sort */}
-          {notes.length > 0 && (
-            <div className="flex items-center gap-1.5 relative" ref={filterMenuRef}>
-              <button
-                onClick={() => setSortAscending(!sortAscending)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors tooltip"
-                aria-label="Toggle sort order"
-                title={sortAscending ? "Sorting Low to High" : "Sorting High to Low"}
-              >
-                <svg className={`w-4 h-4 transition-transform ${sortAscending ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 ${isFilterMenuOpen || priorityFilters.size < 3 ? 'bg-cal-primary-50 text-cal-primary' : 'hover:bg-gray-100 text-gray-500'}`}
-                aria-label="Filter priorities"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                {priorityFilters.size < 3 && <span className="text-[10px] font-bold">{priorityFilters.size}</span>}
-              </button>
-
-              {isFilterMenuOpen && (
-                <div className="absolute top-full right-0 mt-1 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20 animate-fade-in">
-                  {(['high', 'medium', 'low'] as const).map(p => (
-                    <button
-                      key={p}
-                      onClick={() => toggleFilter(p)}
-                      className="w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className={`w-3 h-3 rounded-full border ${priorityFilters.has(p) ? (p === 'high' ? 'bg-red-500 border-red-500' : p === 'medium' ? 'bg-amber-500 border-amber-500' : 'bg-green-500 border-green-500') : 'bg-transparent border-gray-300'}`} />
-                      <span className="capitalize text-gray-700">{p}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
+
+        <FilterPanel
+          searchQuery={filters.searchQuery}
+          onSearchChange={updateSearchQuery}
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          onDateRangeChange={updateDateRange}
+          categories={filters.categories}
+          onToggleCategory={toggleCategory}
+          priorities={filters.priorities}
+          onTogglePriority={togglePriority}
+          onClear={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
 
         {/* Selected Range Badge */}
         {hasRange && !isSelectingEnd && (
@@ -230,7 +247,7 @@ export function NotesPanel({
             </div>
             <button
               onClick={onClearRange}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-cal-bg text-cal-muted hover:text-cal-text transition-colors"
               aria-label="Clear selection"
             >
               <svg
@@ -273,7 +290,7 @@ export function NotesPanel({
       </div>
 
       {/* New Note Input */}
-      <div className="p-4 sm:p-5 border-b border-gray-100">
+      <div className="p-4 sm:p-5 border-b border-cal-border">
         <textarea
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
@@ -283,30 +300,189 @@ export function NotesPanel({
               ? `Add a note for ${rangeText}...`
               : 'Write a general note...'
           }
-          className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 focus:border-cal-primary focus:ring-2 focus:ring-cal-primary/20 outline-none resize-none transition-all duration-200 placeholder:text-gray-400"
+          className="w-full px-3 py-2.5 text-sm rounded-xl border border-cal-border bg-cal-bg text-cal-text focus:border-cal-primary focus:ring-2 focus:ring-cal-primary/20 outline-none resize-none transition-all duration-200 placeholder:text-cal-muted"
           rows={3}
           id="note-input"
         />
         
+        {/* Time and Reminder Selection */}
+        {hasRange && !isSelectingEnd && (
+          <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+            <div className="relative" ref={timeMenuRef}>
+              <button
+                onClick={() => setIsTimeMenuOpen(!isTimeMenuOpen)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] bg-cal-bg border rounded-lg transition-all font-medium text-cal-text hover:bg-cal-border ${
+                  isTimeMenuOpen ? 'border-cal-primary ring-1 ring-cal-primary' : 'border-cal-border'
+                }`}
+                title="Event Time"
+              >
+                <svg className="w-3.5 h-3.5 text-cal-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {eventTime || 'Time'}
+              </button>
+
+              {isTimeMenuOpen && (
+                <div className="absolute bottom-full left-0 mb-2 w-28 max-h-48 overflow-y-auto bg-black/80 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-1.5 z-[60] custom-scrollbar animate-fade-in text-white">
+                  <button
+                    onClick={() => { setEventTime(''); setIsTimeMenuOpen(false); }}
+                    className={`w-full text-center px-4 py-1.5 text-sm transition-colors ${!eventTime ? 'bg-white/20 font-bold text-white' : 'text-white/80 hover:bg-white/10'}`}
+                  >
+                    -- : --
+                  </button>
+                  {timeOptions.map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => { 
+                        setEventTime(time); 
+                        if (eventEndTime && time > eventEndTime) {
+                          setEventEndTime('');
+                        }
+                        setIsTimeMenuOpen(false); 
+                      }}
+                      className={`w-full text-center px-4 py-1.5 text-sm transition-colors ${eventTime === time ? 'bg-white/20 font-bold text-white' : 'text-white/80 hover:bg-white/10'}`}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {eventTime && (
+              <>
+                <span className="text-cal-muted">-</span>
+                <div className="relative" ref={endTimeMenuRef}>
+                  <button
+                    onClick={() => setIsEndTimeMenuOpen(!isEndTimeMenuOpen)}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] bg-cal-bg border rounded-lg transition-all font-medium text-cal-text hover:bg-cal-border ${
+                      isEndTimeMenuOpen ? 'border-cal-primary ring-1 ring-cal-primary' : 'border-cal-border'
+                    }`}
+                    title="End Time"
+                  >
+                    {eventEndTime || 'End Time'}
+                  </button>
+                  
+                  {isEndTimeMenuOpen && (
+                    <div className="absolute bottom-full left-0 mb-2 w-28 max-h-48 overflow-y-auto bg-black/80 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-1.5 z-[60] custom-scrollbar animate-fade-in text-white">
+                      <button
+                        onClick={() => { setEventEndTime(''); setIsEndTimeMenuOpen(false); }}
+                        className={`w-full text-center px-4 py-1.5 text-sm transition-colors ${!eventEndTime ? 'bg-white/20 font-bold text-white' : 'text-white/80 hover:bg-white/10'}`}
+                      >
+                        -- : --
+                      </button>
+                      {timeOptions.map((time) => {
+                        // Only show times after the start time
+                        if (eventTime && time <= eventTime) return null;
+                        return (
+                          <button
+                            key={time}
+                            onClick={() => { setEventEndTime(time); setIsEndTimeMenuOpen(false); }}
+                            className={`w-full text-center px-4 py-1.5 text-sm transition-colors ${eventEndTime === time ? 'bg-white/20 font-bold text-white' : 'text-white/80 hover:bg-white/10'}`}
+                          >
+                            {time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-1.5 ml-1 relative" ref={reminderMenuRef}>
+                  <svg className="w-4 h-4 text-cal-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  <button
+                    onClick={() => setIsReminderMenuOpen(!isReminderMenuOpen)}
+                    className={`flex items-center justify-between gap-2 px-3 py-2.5 min-h-[44px] bg-cal-bg border rounded-lg transition-all font-medium text-cal-text hover:bg-cal-border min-w-[110px] ${
+                      isReminderMenuOpen ? 'border-cal-primary ring-1 ring-cal-primary' : 'border-cal-border'
+                    }`}
+                    title="Reminder"
+                  >
+                    <span>{reminderOptions.find(o => o.value === reminder)?.label || 'No reminder'}</span>
+                    <svg className="w-3.5 h-3.5 text-cal-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {isReminderMenuOpen && (
+                    <div className="absolute bottom-full left-6 mb-2 w-32 bg-black/80 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-1.5 z-[60] animate-fade-in text-white text-sm">
+                      {reminderOptions.map((option) => (
+                        <button
+                          key={option.label}
+                          onClick={() => { setReminder(option.value); setIsReminderMenuOpen(false); }}
+                          className={`w-full text-center px-3 py-2 transition-colors ${reminder === option.value ? 'bg-white/20 font-bold text-white' : 'text-white/80 hover:bg-white/10'}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Priority Selection & Submit Row */}
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-gray-500 mr-1">Priority:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 gap-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-medium text-cal-muted mr-1">Priority:</span>
             {(['low', 'medium', 'high'] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setPriority(p)}
-                className={`px-2 py-1 text-xs font-medium rounded-lg border transition-all duration-200 capitalize ${priority === p ? priorityColors[p] : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 capitalize flex items-center justify-center hover:scale-105 active:scale-95 ${priority === p ? priorityColors[p] : 'bg-cal-bg text-cal-muted border-cal-border hover:bg-cal-card'}`}
               >
                 {p}
               </button>
             ))}
+
+            <div className="relative" ref={categoryMenuRef}>
+              <button
+                onClick={() => setIsCategoryMenuOpen(!isCategoryMenuOpen)}
+                className={`ml-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center gap-1.5 capitalize shadow-sm hover:scale-105 active:scale-95 ${
+                  newCategory === 'work' ? 'bg-blue-500 border-blue-500 text-white' :
+                  newCategory === 'personal' ? 'bg-purple-500 border-purple-500 text-white' :
+                  newCategory === 'study' ? 'bg-emerald-500 border-emerald-500 text-white' :
+                  'bg-gray-500 border-gray-500 text-white'
+                }`}
+                title="Category"
+              >
+                {newCategory}
+                <svg className={`w-3 h-3 text-white/70 transition-transform ${isCategoryMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isCategoryMenuOpen && (
+                <div className="absolute bottom-full left-2 mb-2 w-28 bg-black/80 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 py-1.5 z-[60] animate-fade-in text-white flex flex-col">
+                  {(['work', 'personal', 'study', 'other'] as const).map(c => {
+                    const colorMap: Record<string, string> = {
+                      work: newCategory === c ? 'bg-blue-500 font-bold text-white' : 'text-white/80 hover:bg-white/10 hover:text-blue-400',
+                      personal: newCategory === c ? 'bg-purple-500 font-bold text-white' : 'text-white/80 hover:bg-white/10 hover:text-purple-400',
+                      study: newCategory === c ? 'bg-emerald-500 font-bold text-white' : 'text-white/80 hover:bg-white/10 hover:text-emerald-400',
+                      other: newCategory === c ? 'bg-gray-500 font-bold text-white' : 'text-white/80 hover:bg-white/10 hover:text-gray-300',
+                    };
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => { setNewCategory(c); setIsCategoryMenuOpen(false); }}
+                        className={`w-full text-center px-3 py-2 text-xs capitalize transition-all ${colorMap[c] || ''}`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <button
             onClick={handleAddNote}
             disabled={!newNote.trim()}
-            className="px-4 py-1.5 text-sm font-medium rounded-lg bg-cal-primary text-white hover:bg-cal-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+            className="w-full sm:w-auto justify-center px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-cal-primary text-white hover:bg-cal-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
             id="add-note-btn"
           >
             <svg
@@ -331,9 +507,9 @@ export function NotesPanel({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-3 relative">
         {notes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-cal-bg flex items-center justify-center mb-4">
               <svg
-                className="w-8 h-8 text-gray-300"
+                className="w-8 h-8 text-cal-muted"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -346,16 +522,16 @@ export function NotesPanel({
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-400 mb-1">
+            <p className="text-sm font-medium text-cal-text mb-1">
               No notes yet
             </p>
-            <p className="text-xs text-gray-300">
+            <p className="text-xs text-cal-muted">
               Select dates and start writing
             </p>
           </div>
         ) : filteredAndSortedNotes.length === 0 ? (
-           <div className="flex flex-col items-center justify-center py-8 text-center text-gray-400">
-             <p className="text-sm">No notes match the selected priority filters.</p>
+           <div className="flex flex-col items-center justify-center py-8 text-center text-cal-muted">
+             <p className="text-sm">No notes match the active filters or search.</p>
            </div>
         ) : (
           filteredAndSortedNotes.map((note, index) => {
@@ -378,25 +554,45 @@ export function NotesPanel({
                 />
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">
-                      {note.content}
+                    <p className="text-sm text-cal-text whitespace-pre-wrap break-words">
+                      <SearchMatchHighlight text={note.content} query={debouncedSearch} />
                     </p>
                     <div className="flex items-center flex-wrap gap-2 mt-2.5">
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded uppercase tracking-wider border ${colors}`}>
                         {p}
                       </span>
-                      <span className="text-xs text-gray-400 font-medium">
+                      {note.category && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded uppercase tracking-wider border bg-cal-bg border-cal-border text-cal-muted">
+                          {note.category}
+                        </span>
+                      )}
+                      {note.eventTime && (
+                        <span className="text-xs font-semibold text-cal-text bg-cal-card px-1.5 py-0.5 rounded border border-cal-border shadow-sm flex items-center gap-1">
+                          <svg className="w-3 h-3 text-cal-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {note.eventTime}{note.eventEndTime ? ` - ${note.eventEndTime}` : ''}
+                          {note.reminder !== undefined && (
+                            <div title={`Reminder: ${note.reminder} mins before`} className="flex items-center">
+                              <svg className="w-3 h-3 text-amber-500 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                              </svg>
+                            </div>
+                          )}
+                        </span>
+                      )}
+                      <span className="text-xs text-cal-muted font-medium">
                         {formatNoteDate(note)}
                       </span>
-                      <span className="text-xs text-gray-300">·</span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-cal-muted/50">·</span>
+                      <span className="text-xs text-cal-muted">
                         {formatTimestamp(note.createdAt)}
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={() => handleDelete(note.id)}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all duration-200 flex-shrink-0"
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/40 text-cal-muted hover:text-red-500 transition-all duration-200 flex-shrink-0"
                     aria-label="Delete note"
                   >
                     <svg
